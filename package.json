@@ -1,27 +1,44 @@
 {
   "name": "md2pdf",
-  "version": "1.0.3",
-  "description": "Markdown to PDF converter with live preview, syntax highlighting, and KaTeX math",
+  "version": "2.0.0",
+  "description": "Professional Markdown to PDF converter built with Next.js, Tailwind CSS v4, shadcn/ui, KaTeX math, and Mermaid diagrams",
   "private": true,
   "scripts": {
-    "dev": "npx nodemon server.js",
-    "start": "node server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "keywords": [
-    "markdown",
-    "pdf",
-    "converter",
-    "syntax-highlighting",
-    "katex"
-  ],
-  "license": "MIT",
   "dependencies": {
-    "@sparticuz/chromium": "^149.0.0",
-    "express": "^5.2.1",
-    "katex": "^0.18.1",
-    "puppeteer-core": "^25.3.0"
+    "@tailwindcss/postcss": "^4.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.4.7",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.10.2",
+    "jspdf": "^4.2.1",
+    "katex": "^0.16.21",
+    "lucide-react": "^0.475.0",
+    "mermaid": "^11.4.1",
+    "next": "^14.2.24",
+    "prismjs": "^1.29.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.3",
+    "rehype-katex": "^7.0.1",
+    "rehype-prism-plus": "^2.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@types/katex": "^0.16.7",
+    "@types/node": "^20.17.19",
+    "@types/prismjs": "^1.26.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "postcss": "^8.5.2",
+    "typescript": "^5.7.3"
   }
 }

@@ -1,6 +1,0 @@
-{
-  "watch": ["server.js", "api/"],
-  "ext": "js,json",
-  "ignore": ["node_modules/", "public/"],
-  "delay": 500
-}
