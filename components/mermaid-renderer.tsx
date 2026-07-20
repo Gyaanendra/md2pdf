@@ -10,9 +10,11 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [isRendered, setIsRendered] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
+    setIsRendered(false);
 
     async function renderDiagram() {
       if (!chart.trim()) return;
@@ -56,11 +58,13 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
             setSvgContent(svg);
           }
           setError(null);
+          setIsRendered(true);
         }
       } catch (err: any) {
         console.error("Mermaid rendering error:", err);
         if (isMounted) {
           setError(err?.message || "Failed to render Mermaid diagram");
+          setIsRendered(true);
         }
       }
     }
@@ -75,6 +79,7 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
   if (error) {
     return (
       <div
+        data-rendered="true"
         className="my-4 p-4 rounded-lg text-xs font-mono"
         style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", color: "#be123c" }}
       >
@@ -93,6 +98,7 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
   return (
     <div
       ref={containerRef}
+      data-rendered={isRendered ? "true" : "false"}
       className="mermaid-wrapper my-6 p-4 rounded-xl overflow-x-auto flex justify-center items-center shadow-xs page-break-inside-avoid"
       style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0" }}
       dangerouslySetInnerHTML={{ __html: svgContent || `<div class="py-8 text-center text-xs text-slate-400 animate-pulse">Rendering diagram...</div>` }}

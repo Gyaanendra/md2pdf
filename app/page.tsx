@@ -42,51 +42,53 @@ export default function Home() {
     showToast("Editor cleared", "info");
   };
 
-  // Deep Color Sanitizer for html2canvas compatibility with Tailwind CSS v4 (lab / oklch functions)
-  const sanitizeDocumentColors = (doc: Document) => {
-    const styleTags = Array.from(doc.querySelectorAll("style"));
-    styleTags.forEach((styleTag) => {
-      if (styleTag.textContent && (styleTag.textContent.includes("lab(") || styleTag.textContent.includes("oklch("))) {
-        styleTag.textContent = styleTag.textContent
-          .replace(/lab\([^)]+\)/gi, "rgb(15, 23, 42)")
-          .replace(/oklch\([^)]+\)/gi, "rgb(15, 23, 42)")
-          .replace(/color\(srgb[^)]+\)/gi, "rgb(15, 23, 42)");
-      }
-    });
-
-    const allElements = Array.from(doc.querySelectorAll("*"));
-    allElements.forEach((el: any) => {
-      try {
-        if (!el || !el.style) return;
-        const win = el.ownerDocument?.defaultView || window;
-        const computed = win.getComputedStyle(el);
-
-        const colorProperties = ["color", "backgroundColor", "borderColor", "outlineColor", "fill", "stroke"];
-        colorProperties.forEach((prop) => {
-          const val = computed[prop as any];
-          if (val && (val.includes("lab(") || val.includes("oklch("))) {
-            el.style[prop] = "rgb(15, 23, 42)";
-          }
-        });
-      } catch (err) {
-        // ignore errors
-      }
-    });
-  };
-
-  // PDF Download Engine (Primary html2pdf.js CDN, Fallback jsPDF+html2canvas)
+  // PDF Export Engine: Primary Puppeteer API, Fallback html2pdf
   const handleExportPdf = async (options: ExportOptions) => {
-    showToast("Generating PDF download...", "info");
+    showToast("Generating high-resolution PDF...", "info");
 
     const element = document.getElementById("preview-content");
     if (!element) return;
 
-    sanitizeDocumentColors(document);
+    // Ensure all Mermaid SVGs are rendered before grabbing HTML
+    const unrenderedMermaids = element.querySelectorAll('.mermaid-wrapper[data-rendered="false"]');
+    if (unrenderedMermaids.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    }
 
-    const marginMm = options.margin === "narrow" ? 8 : options.margin === "wide" ? 25 : 15;
     const filename = formatFilename(options.title);
 
     try {
+      // 1. Primary Engine: Server-side Puppeteer API (Pixel-Perfect Vector PDF)
+      const res = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: element.innerHTML,
+          title: options.title,
+          options: options,
+        }),
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("PDF downloaded successfully!", "success");
+        return;
+      }
+    } catch (err) {
+      console.warn("Puppeteer API fallback to browser html2pdf:", err);
+    }
+
+    // 2. Secondary Fallback Engine: Client-side html2pdf
+    try {
+      const marginMm = options.margin === "narrow" ? 8 : options.margin === "wide" ? 25 : 15;
       const html2pdf = (window as any).html2pdf;
       if (typeof html2pdf === "function") {
         const opt = {
@@ -97,73 +99,16 @@ export default function Home() {
             mode: ["avoid-all", "css", "legacy"],
             avoid: ["tr", "img", "pre", "table", "blockquote", ".mermaid-wrapper", ".katex-display", "h1", "h2", "h3"]
           },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            allowTaint: true,
-            onclone: (clonedDoc: Document) => {
-              sanitizeDocumentColors(clonedDoc);
-            }
-          },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
           jsPDF: { unit: "mm", format: options.pageSize.toLowerCase(), orientation: options.orientation }
         };
         await html2pdf().set(opt).from(element).save();
         showToast("PDF downloaded successfully!", "success");
         return;
       }
-
-      // Fallback Engine: jsPDF + html2canvas
-      const html2canvasModule = await import("html2canvas");
-      const jsPDFModule = await import("jspdf");
-      const html2canvas = (html2canvasModule.default || html2canvasModule) as any;
-      const { jsPDF } = jsPDFModule;
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        allowTaint: true,
-        onclone: (clonedDoc: Document) => {
-          sanitizeDocumentColors(clonedDoc);
-        }
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
-
-      const pdf = new jsPDF({
-        orientation: options.orientation,
-        unit: "mm",
-        format: options.pageSize.toLowerCase() as any,
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const printableWidth = pageWidth - marginMm * 2;
-      const printableHeight = pageHeight - marginMm * 2;
-
-      const imgWidth = printableWidth;
-      const imgHeight = (canvas.height * printableWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = marginMm;
-
-      pdf.addImage(imgData, "JPEG", marginMm, position, imgWidth, imgHeight);
-      heightLeft -= printableHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + marginMm;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", marginMm, position, imgWidth, imgHeight);
-        heightLeft -= printableHeight;
-      }
-
-      pdf.save(filename);
-      showToast("PDF downloaded successfully!", "success");
     } catch (err: any) {
       console.error("PDF export error:", err);
-      showToast("Launching print dialog for high-res PDF...", "warning");
+      showToast("Launching browser Print dialog...", "warning");
       window.print();
     }
   };

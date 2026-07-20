@@ -6,9 +6,19 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import MermaidRenderer from "./mermaid-renderer";
+import katex from "katex";
 
 import "katex/dist/katex.min.css";
-import "katex/dist/contrib/mhchem";
+
+if (typeof window !== "undefined") {
+  (window as any).katex = katex;
+}
+
+try {
+  require("katex/dist/contrib/mhchem");
+} catch (e) {
+  // fallback if already loaded
+}
 
 interface MarkdownPreviewProps {
   content: string;
@@ -17,9 +27,9 @@ interface MarkdownPreviewProps {
 export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const katex = (window as any).katex;
-      if (katex && !katex.__defineMacro) {
-        katex.__defineMacro = () => {};
+      const k = (window as any).katex || katex;
+      if (k && !k.__defineMacro) {
+        k.__defineMacro = () => {};
       }
     }
   }, []);
@@ -42,7 +52,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
     <div id="preview-content" className="markdown-body prose max-w-none prose-slate prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-img:rounded-xl prose-img:mx-auto prose-img:shadow-xs">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, { trust: true, strict: false }]]}
         components={{
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-mermaid/.exec(className || "");
