@@ -1,24 +1,18 @@
 "use client";
 
 import React from "react";
-import { FileText, Copy, Check, Printer, Download, RotateCcw, Sparkles } from "lucide-react";
+import { FileText, Download, RotateCcw, Sparkles } from "lucide-react";
 
 interface HeaderProps {
   onLoadSample: () => void;
   onClear: () => void;
-  onCopyHtml: () => void;
-  onPrint: () => void;
   onOpenExportModal: () => void;
-  isCopied: boolean;
 }
 
 export default function Header({
   onLoadSample,
   onClear,
-  onCopyHtml,
-  onPrint,
   onOpenExportModal,
-  isCopied,
 }: HeaderProps) {
   return (
     <header className="no-print h-14 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between shadow-2xs z-30 select-none">
@@ -70,24 +64,6 @@ export default function Header({
         </button>
 
         <div className="h-4 w-px bg-slate-200 mx-0.5" />
-
-        <button
-          onClick={onCopyHtml}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-all"
-          title="Copy compiled HTML to clipboard"
-        >
-          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-          <span className="hidden md:inline">{isCopied ? "Copied" : "Copy HTML"}</span>
-        </button>
-
-        <button
-          onClick={onPrint}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-all"
-          title="Print document or save via Browser Print"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Print</span>
-        </button>
 
         <button
           onClick={onOpenExportModal}

@@ -19,7 +19,6 @@ export default function Home() {
   const [markdown, setMarkdown] = useState<string>(SAMPLE_MARKDOWN);
   const [splitRatio, setSplitRatio] = useState<number>(50);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isDraggingGutter, setIsDraggingGutter] = useState(false);
 
@@ -43,28 +42,12 @@ export default function Home() {
     showToast("Editor cleared", "info");
   };
 
-  const handleCopyHtml = () => {
-    const previewEl = document.getElementById("preview-content");
-    if (!previewEl || !previewEl.innerHTML.trim()) return;
-
-    navigator.clipboard.writeText(previewEl.innerHTML).then(() => {
-      setIsCopied(true);
-      showToast("HTML copied to clipboard!", "success");
-      setTimeout(() => setIsCopied(false), 2000);
-    }).catch(() => {
-      showToast("Failed to copy HTML", "error");
-    });
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Sanitize stylesheet modern color functions (lab, oklch) for html2canvas compatibility
-  const sanitizeDocumentStyles = (clonedDoc: Document) => {
-    const styles = Array.from(clonedDoc.querySelectorAll("style"));
-    styles.forEach((styleTag) => {
-      if (styleTag.textContent) {
+  // Deep Color Sanitizer for html2canvas compatibility with Tailwind CSS v4 (lab / oklch functions)
+  const sanitizeDocumentColors = (doc: Document) => {
+    // 1. Replace lab() / oklch() / color() in all <style> text content
+    const styleTags = Array.from(doc.querySelectorAll("style"));
+    styleTags.forEach((styleTag) => {
+      if (styleTag.textContent && (styleTag.textContent.includes("lab(") || styleTag.textContent.includes("oklch("))) {
         styleTag.textContent = styleTag.textContent
           .replace(/lab\([^)]+\)/gi, "rgb(15, 23, 42)")
           .replace(/oklch\([^)]+\)/gi, "rgb(15, 23, 42)")
@@ -72,14 +55,23 @@ export default function Home() {
       }
     });
 
-    const elements = Array.from(clonedDoc.querySelectorAll("*"));
-    elements.forEach((el: any) => {
-      if (el.style && el.style.cssText) {
-        if (el.style.cssText.includes("lab(") || el.style.cssText.includes("oklch(")) {
-          el.style.cssText = el.style.cssText
-            .replace(/lab\([^)]+\)/gi, "rgb(15, 23, 42)")
-            .replace(/oklch\([^)]+\)/gi, "rgb(15, 23, 42)");
-        }
+    // 2. Convert elements with computed lab() or oklch() colors to explicit inline RGB
+    const allElements = Array.from(doc.querySelectorAll("*"));
+    allElements.forEach((el: any) => {
+      try {
+        if (!el || !el.style) return;
+        const win = el.ownerDocument?.defaultView || window;
+        const computed = win.getComputedStyle(el);
+
+        const colorProperties = ["color", "backgroundColor", "borderColor", "outlineColor", "fill", "stroke"];
+        colorProperties.forEach((prop) => {
+          const val = computed[prop as any];
+          if (val && (val.includes("lab(") || val.includes("oklch("))) {
+            el.style[prop] = "rgb(15, 23, 42)";
+          }
+        });
+      } catch (err) {
+        // ignore errors on unreachable elements
       }
     });
   };
@@ -90,6 +82,9 @@ export default function Home() {
 
     const element = document.getElementById("preview-content");
     if (!element) return;
+
+    // First sanitize live document style tags before html2canvas scans document.styleSheets
+    sanitizeDocumentColors(document);
 
     const marginMm = options.margin === "narrow" ? 8 : options.margin === "wide" ? 25 : 15;
     const filename = formatFilename(options.title);
@@ -105,8 +100,9 @@ export default function Home() {
             scale: 2,
             useCORS: true,
             logging: false,
+            allowTaint: true,
             onclone: (clonedDoc: Document) => {
-              sanitizeDocumentStyles(clonedDoc);
+              sanitizeDocumentColors(clonedDoc);
             }
           },
           jsPDF: { unit: "mm", format: options.pageSize.toLowerCase(), orientation: options.orientation }
@@ -116,7 +112,7 @@ export default function Home() {
         return;
       }
 
-      // Fallback Engine
+      // Fallback Engine: jsPDF + html2canvas
       const html2canvasModule = await import("html2canvas");
       const jsPDFModule = await import("jspdf");
       const html2canvas = (html2canvasModule.default || html2canvasModule) as any;
@@ -127,8 +123,9 @@ export default function Home() {
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
+        allowTaint: true,
         onclone: (clonedDoc: Document) => {
-          sanitizeDocumentStyles(clonedDoc);
+          sanitizeDocumentColors(clonedDoc);
         }
       });
 
@@ -165,7 +162,8 @@ export default function Home() {
       showToast("PDF downloaded successfully!", "success");
     } catch (err: any) {
       console.error("PDF export error:", err);
-      showToast("PDF generation error: " + (err?.message || "Unknown error"), "error");
+      showToast("PDF generation fallback: launching Print dialog", "warning");
+      window.print();
     }
   };
 
@@ -227,10 +225,7 @@ export default function Home() {
       <Header
         onLoadSample={handleLoadSample}
         onClear={handleClear}
-        onCopyHtml={handleCopyHtml}
-        onPrint={handlePrint}
         onOpenExportModal={() => setIsExportModalOpen(true)}
-        isCopied={isCopied}
       />
 
       {/* Split Pane Interface */}
