@@ -1,6 +1,9 @@
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
+const lineNumbers = document.getElementById('line-numbers');
 const lineCount = document.getElementById('line-count');
+const wordCount = document.getElementById('word-count');
+const cursorPos = document.getElementById('cursor-pos');
 const btnDownload = document.getElementById('btn-download');
 const btnSample = document.getElementById('btn-sample');
 const btnClear = document.getElementById('btn-clear');
@@ -9,12 +12,49 @@ const modalCancel = document.getElementById('modal-cancel');
 const modalConfirm = document.getElementById('modal-confirm');
 const pdfTitleInput = document.getElementById('pdf-title');
 const gutter = document.getElementById('gutter');
+const previewScroll = document.getElementById('preview-scroll');
 
 let debounceTimer = null;
 
-// ─── Markdown rendering with marked ───
+// ─── Line numbers ───
+function updateLineNumbers() {
+  const lines = editor.value.split('\n').length;
+  let html = '';
+  for (let i = 1; i <= lines; i++) html += `<span>${i}</span>`;
+  lineNumbers.innerHTML = html;
+}
+
+// ─── Sync scroll (editor ↔ line numbers) ───
+editor.addEventListener('scroll', () => {
+  lineNumbers.scrollTop = editor.scrollTop;
+});
+
+// ─── Cursor position ───
+function updateCursorPos() {
+  const val = editor.value;
+  const pos = editor.selectionStart;
+  const before = val.substring(0, pos);
+  const ln = before.split('\n').length;
+  const col = pos - before.lastIndexOf('\n');
+  cursorPos.textContent = `Ln ${ln}, Col ${col}`;
+}
+editor.addEventListener('input', updateCursorPos);
+editor.addEventListener('click', updateCursorPos);
+editor.addEventListener('keyup', updateCursorPos);
+
+// ─── Word count ───
+function updateWordCount() {
+  const words = editor.value.trim() ? editor.value.trim().split(/\s+/).length : 0;
+  wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+}
+
+// ─── Markdown rendering ───
 function updatePreview() {
   const md = editor.value;
+  updateLineNumbers();
+  updateWordCount();
+  updateCursorPos();
+
   if (!md.trim()) {
     preview.innerHTML = `
       <div class="empty-state">
@@ -29,67 +69,96 @@ function updatePreview() {
 
   if (typeof marked === 'undefined') return;
 
-  // Configure marked
-  marked.setOptions({
-    gfm: true,
-    breaks: true,
-    highlight: null
+  // ── Step 1: Extract math blocks before marked touches them ──
+  const mathBlocks = [];
+  let processed = md;
+
+  // Extract display math $$...$$
+  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    const id = mathBlocks.length;
+    mathBlocks.push({ type: 'display', content });
+    return `%%MATH_DISPLAY_${id}%%`;
   });
 
-  let html = marked.parse(md);
+  // Extract inline math $...$
+  processed = processed.replace(/\$([^\$\n]+?)\$/g, (match, content) => {
+    const id = mathBlocks.length;
+    mathBlocks.push({ type: 'inline', content });
+    return `%%MATH_INLINE_${id}%%`;
+  });
+
+  // Extract block math \[...\]
+  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+    const id = mathBlocks.length;
+    mathBlocks.push({ type: 'display', content });
+    return `%%MATH_DISPLAY_${id}%%`;
+  });
+
+  // Extract inline math \(...\)
+  processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, (match, content) => {
+    const id = mathBlocks.length;
+    mathBlocks.push({ type: 'inline', content });
+    return `%%MATH_INLINE_${id}%%`;
+  });
+
+  // ── Step 2: Let marked parse the rest ──
+  marked.setOptions({ gfm: true, breaks: true });
+  let html = marked.parse(processed);
+
+  // ── Step 3: Restore math blocks as rendered KaTeX ──
+  mathBlocks.forEach((block, id) => {
+    try {
+      const rendered = katex.renderToString(block.content, {
+        displayMode: block.type === 'display',
+        throwOnError: false,
+        trust: true
+      });
+      if (block.type === 'display') {
+        html = html.replace(`%%MATH_DISPLAY_${id}%%`, `<div class="katex-display">${rendered}</div>`);
+      } else {
+        html = html.replace(`%%MATH_INLINE_${id}%%`, rendered);
+      }
+    } catch (e) {
+      const errHtml = `<span class="katex-error">${block.content}</span>`;
+      html = html.replace(`%%MATH_${block.type.toUpperCase()}_${id}%%`, errHtml);
+    }
+  });
+
+  // Clean any remaining placeholders
+  html = html.replace(/%%MATH_(?:DISPLAY|INLINE)_\d+%%/g, '');
+
   preview.innerHTML = html;
 
-  // Re-highlight all code blocks with Prism
+  // ── Step 4: Highlight code with Prism ──
   if (typeof Prism !== 'undefined') {
     preview.querySelectorAll('pre code').forEach(block => {
       Prism.highlightElement(block);
     });
   }
 
-  // Render KaTeX math
-  renderMath();
-
-  // Render Mermaid diagrams
+  // ── Step 5: Render Mermaid ──
   renderMermaid();
 }
 
-// ─── KaTeX auto-render ───
-function renderMath() {
-  if (typeof renderMathInElement !== 'undefined') {
-    renderMathInElement(preview, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '\\[', right: '\\]', display: true },
-        { left: '$', right: '$', display: false },
-        { left: '\\(', right: '\\)', display: false }
-      ],
-      throwOnError: false,
-      trust: true
-    });
-  }
-}
-
 // ─── Mermaid render ───
-function renderMermaid() {
+async function renderMermaid() {
   if (typeof mermaid === 'undefined') return;
   mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
   const blocks = preview.querySelectorAll('code.language-mermaid');
-  blocks.forEach((block, i) => {
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
     const pre = block.parentElement;
     const container = document.createElement('div');
     container.className = 'mermaid';
     container.id = `mermaid-${i}`;
     pre.replaceWith(container);
     try {
-      mermaid.render(`mermaid-svg-${i}`, block.textContent).then(({ svg }) => {
-        container.innerHTML = svg;
-      }).catch(() => {
-        container.textContent = block.textContent;
-      });
+      const { svg } = await mermaid.render(`mermaid-svg-${i}`, block.textContent);
+      container.innerHTML = svg;
     } catch {
       container.textContent = block.textContent;
     }
-  });
+  }
 }
 
 // ─── Line count ───
@@ -104,7 +173,7 @@ function onInput() {
   debounceTimer = setTimeout(() => {
     updatePreview();
     updateLineCount();
-  }, 100);
+  }, 80);
 }
 
 editor.addEventListener('input', onInput);
@@ -435,3 +504,5 @@ btnClear.addEventListener('click', () => {
 
 // ─── Init ───
 onInput();
+updateLineNumbers();
+updateCursorPos();

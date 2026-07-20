@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>md2pdf — Markdown to PDF</title>
 
-  <!-- GitHub Markdown CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css">
-
-  <!-- PrismJS Theme (Tomorrow Night for dark code blocks) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
   <!-- KaTeX CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+  <!-- PrismJS Theme (Tomorrow Night) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <!-- GitHub Markdown CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css">
 
   <!-- App CSS -->
   <link rel="stylesheet" href="style.css">
@@ -45,11 +45,12 @@
       <a href="https://gyanendra.vihar.in" target="_blank" rel="noopener" class="btn btn-ghost btn-icon" title="Portfolio">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </a>
+      <span class="separator">|</span>
       <button id="btn-sample" class="btn btn-ghost">Sample</button>
       <button id="btn-clear" class="btn btn-ghost">Clear</button>
       <button id="btn-download" class="btn btn-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download PDF
+        PDF
       </button>
     </div>
   </header>
@@ -59,22 +60,31 @@
     <div class="pane editor-pane">
       <div class="pane-header">
         <span>Markdown</span>
-        <span class="line-count" id="line-count">0 lines</span>
+        <span class="editor-meta">
+          <span id="line-count">0 lines</span>
+          <span class="meta-sep">·</span>
+          <span id="word-count">0 words</span>
+          <span class="meta-sep">·</span>
+          <span id="cursor-pos">Ln 1, Col 1</span>
+        </span>
       </div>
-      <textarea id="editor" spellcheck="false" placeholder="Paste or type your markdown here..."></textarea>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea id="editor" spellcheck="false" placeholder="Paste or type your markdown here..."></textarea>
+      </div>
     </div>
     <div class="gutter" id="gutter"></div>
     <div class="pane preview-pane">
       <div class="pane-header">
         <span>Preview</span>
       </div>
-      <div class="preview-scroll">
+      <div class="preview-scroll" id="preview-scroll">
         <div id="preview" class="markdown-body"></div>
       </div>
     </div>
   </div>
 
-  <!-- Libs (loaded in order) -->
+  <!-- Libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>

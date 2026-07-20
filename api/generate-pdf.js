@@ -12,8 +12,27 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No markdown provided' });
     }
 
+    // Pre-process: extract math blocks so KaTeX renders properly in PDF
+    let processed = markdown;
+
+    // Protect display math $$...$$
+    const displayMath = [];
+    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (_, content) => {
+      const id = displayMath.length;
+      displayMath.push(content);
+      return `%%DISPLAYMATH${id}%%`;
+    });
+
+    // Protect inline math $...$
+    const inlineMath = [];
+    processed = processed.replace(/\$([^\$\n]+?)\$/g, (_, content) => {
+      const id = inlineMath.length;
+      inlineMath.push(content);
+      return `%%INLINEMATH${id}%%`;
+    });
+
     const pdf = await mdToPdf(
-      { content: markdown },
+      { content: processed },
       {
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -56,7 +75,6 @@ module.exports = async (req, res) => {
             margin: 0 auto;
             padding: 0;
           }
-          /* Remove white gaps before code blocks */
           pre { margin-top: 0 !important; }
           p + pre, pre + p { margin-top: 0 !important; }
           pre {
@@ -76,7 +94,6 @@ module.exports = async (req, res) => {
             font-size: 10.5px;
             color: #24292f;
           }
-          /* Syntax token colors — high contrast on light bg */
           pre .token.comment, pre .token.prolog, pre .token.doctype, pre .token.cdata { color: #6a737d; }
           pre .token.punctuation { color: #24292f; }
           pre .token.property, pre .token.tag, pre .token.boolean, pre .token.number, pre .token.constant, pre .token.symbol, pre .token.deleted { color: #005cc5; }
@@ -107,21 +124,17 @@ module.exports = async (req, res) => {
           h1, h2, h3, h4 { margin-top: 20px; margin-bottom: 12px; font-weight: 600; line-height: 1.25; }
           h1 { font-size: 2em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
           h2 { font-size: 1.5em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
-          .katex-display {
-            margin: 16px 0;
-            padding: 12px;
-            background: #fafbfc;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
-            overflow-x: auto;
-            text-align: center;
-          }
-          .katex { font-size: 1.15em; }
           hr { border: none; border-top: 2px solid #d0d7de; margin: 12px 0; }
           p:last-child { page-break-inside: avoid; }
-          /* Mermaid diagrams */
-          .mermaid { text-align: center; margin: 16px 0; }
-        `
+          .mermaid { text-align: center; margin: 16px 0; padding: 12px; background: #fafbfc; border: 1px solid #d0d7de; border-radius: 6px; }
+          .mermaid svg { max-width: 100%; height: auto; }
+
+          /* KaTeX display math */
+          .katex-display { margin: 16px 0 !important; text-align: center; }
+          .katex-display > .katex { font-size: 1.15em; }
+        `,
+        // Wait for mermaid to finish rendering
+        waitUntil: 'networkidle0'
       }
     );
 
