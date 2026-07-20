@@ -28,7 +28,11 @@ header {
 }
 .logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; color: var(--text); }
 .logo svg { color: var(--accent); }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.header-actions { display: flex; gap: 6px; align-items: center; }
+.made-by { font-size: 12px; color: var(--text-secondary); margin-right: 4px; }
+.made-by a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.made-by a:hover { text-decoration: underline; }
+.btn-icon { padding: 6px 8px; }
 
 /* ─── Buttons ─── */
 .btn {
@@ -197,7 +201,21 @@ header {
 .preview-scroll .markdown-body hr {
   border: none;
   border-top: 2px solid var(--border);
-  margin: 24px 0;
+  margin: 16px 0;
+}
+
+/* Mermaid diagrams */
+.preview-scroll .markdown-body .mermaid {
+  text-align: center;
+  margin: 16px 0;
+  padding: 12px;
+  background: #fafbfc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.preview-scroll .markdown-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ─── KaTeX Overrides ─── */

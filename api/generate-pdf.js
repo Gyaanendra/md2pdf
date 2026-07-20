@@ -37,6 +37,11 @@ module.exports = async (req, res) => {
           'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css',
           'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
         ],
+        scripts: [
+          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js',
+          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js',
+          'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
+        ],
         css: `
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -51,6 +56,7 @@ module.exports = async (req, res) => {
             margin: 0 auto;
             padding: 0;
           }
+          /* Remove white gaps before code blocks */
           pre { margin-top: 0 !important; }
           p + pre, pre + p { margin-top: 0 !important; }
           pre {
@@ -70,6 +76,7 @@ module.exports = async (req, res) => {
             font-size: 10.5px;
             color: #24292f;
           }
+          /* Syntax token colors — high contrast on light bg */
           pre .token.comment, pre .token.prolog, pre .token.doctype, pre .token.cdata { color: #6a737d; }
           pre .token.punctuation { color: #24292f; }
           pre .token.property, pre .token.tag, pre .token.boolean, pre .token.number, pre .token.constant, pre .token.symbol, pre .token.deleted { color: #005cc5; }
@@ -112,6 +119,8 @@ module.exports = async (req, res) => {
           .katex { font-size: 1.15em; }
           hr { border: none; border-top: 2px solid #d0d7de; margin: 12px 0; }
           p:last-child { page-break-inside: avoid; }
+          /* Mermaid diagrams */
+          .mermaid { text-align: center; margin: 16px 0; }
         `
       }
     );

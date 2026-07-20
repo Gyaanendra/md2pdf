@@ -33,13 +33,10 @@ function updatePreview() {
   marked.setOptions({
     gfm: true,
     breaks: true,
-    highlight: null // we'll use Prism after render
+    highlight: null
   });
 
   let html = marked.parse(md);
-
-  // Inject Prism class attributes so Prism can highlight
-  // marked wraps code in <pre><code class="language-xxx"> — Prism autoloader picks that up
   preview.innerHTML = html;
 
   // Re-highlight all code blocks with Prism
@@ -51,6 +48,9 @@ function updatePreview() {
 
   // Render KaTeX math
   renderMath();
+
+  // Render Mermaid diagrams
+  renderMermaid();
 }
 
 // ─── KaTeX auto-render ───
@@ -67,6 +67,29 @@ function renderMath() {
       trust: true
     });
   }
+}
+
+// ─── Mermaid render ───
+function renderMermaid() {
+  if (typeof mermaid === 'undefined') return;
+  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+  const blocks = preview.querySelectorAll('code.language-mermaid');
+  blocks.forEach((block, i) => {
+    const pre = block.parentElement;
+    const container = document.createElement('div');
+    container.className = 'mermaid';
+    container.id = `mermaid-${i}`;
+    pre.replaceWith(container);
+    try {
+      mermaid.render(`mermaid-svg-${i}`, block.textContent).then(({ svg }) => {
+        container.innerHTML = svg;
+      }).catch(() => {
+        container.textContent = block.textContent;
+      });
+    } catch {
+      container.textContent = block.textContent;
+    }
+  });
 }
 
 // ─── Line count ───
@@ -168,101 +191,238 @@ modalConfirm.addEventListener('click', async () => {
 
 // ─── Sample document ───
 btnSample.addEventListener('click', () => {
-  editor.value = `# Project Report
+  editor.value = `# AI Research & Engineering Report
 
-A beautifully formatted document with **math**, *code*, and more.
+> A technical document showcasing markdown-to-PDF conversion with math, code, diagrams, and structured data.
 
-## Features
+---
 
-- Concurrent conversion of multiple files
-- Custom stylesheets and scripts
-- Front-matter configuration
-- Syntax highlighting with PrismJS
-- KaTeX math rendering
+## 1. Introduction
 
-## Code Examples
+This report demonstrates the capabilities of **md2pdf** — a tool that converts Markdown into beautifully formatted PDF documents. It supports **KaTeX math**, **syntax-highlighted code**, **Mermaid diagrams**, tables, blockquotes, and more.
 
-\`\`\`javascript
-const { mdToPdf } = require('md-to-pdf');
+The goal is to produce publication-quality documents from plain text, enabling engineers and researchers to focus on content rather than formatting.
 
-async function convert() {
-  const pdf = await mdToPdf({ path: 'readme.md' }, {
-    pdf_options: {
-      format: 'A4',
-      margin: '20mm',
-      printBackground: true,
-    }
-  });
-  fs.writeFileSync('output.pdf', pdf.content);
-}
+---
+
+## 2. Machine Learning Fundamentals
+
+### 2.1 The Loss Function
+
+Training a neural network minimizes a loss function $\\mathcal{L}(\\theta)$ over parameters $\\theta$. For binary classification with cross-entropy:
+
+$$
+\\mathcal{L} = -\\frac{1}{N} \\sum_{i=1}^{N} \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]
+$$
+
+Where $y_i$ is the true label and $\\hat{y}_i$ is the predicted probability.
+
+### 2.2 Gradient Descent Update
+
+Parameters are updated using the gradient:
+
+$$
+\\theta_{t+1} = \\theta_t - \\eta \\nabla_\\theta \\mathcal{L}(\\theta_t)
+$$
+
+Where $\\eta$ is the learning rate.
+
+### 2.3 Attention Mechanism
+
+The transformer attention score is computed as:
+
+$$
+\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V
+$$
+
+Where $Q$, $K$, $V$ are query, key, and value matrices, and $d_k$ is the key dimension.
+
+---
+
+## 3. System Architecture
+
+\`\`\`mermaid
+graph TD
+    A[User Input] --> B[Markdown Parser]
+    B --> C{Contains Math?}
+    C -->|Yes| D[KaTeX Renderer]
+    C -->|No| E[HTML Generator]
+    D --> E
+    E --> F{Contains Code?}
+    F -->|Yes| G[Prism Syntax Highlighter]
+    F -->|No| H[PDF Renderer]
+    G --> H
+    H --> I[Final PDF]
 \`\`\`
+
+---
+
+## 4. Implementation
+
+### 4.1 Python — Transformer Block
 
 \`\`\`python
-def fibonacci(n: int) -> list[int]:
-    """Generate Fibonacci sequence."""
-    if n <= 0:
-        return []
-    seq = [0, 1]
-    while len(seq) < n:
-        seq.append(seq[-1] + seq[-2])
-    return seq[:n]
+import torch
+import torch.nn as nn
+import math
 
-print(fibonacci(10))
-# [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+class TransformerBlock(nn.Module):
+    def __init__(self, embed_size, heads, dropout=0.1):
+        super().__init__()
+        self.attention = nn.MultiheadAttention(embed_size, heads)
+        self.norm1 = nn.LayerNorm(embed_size)
+        self.norm2 = nn.LayerNorm(embed_size)
+        self.feed_forward = nn.Sequential(
+            nn.Linear(embed_size, embed_size * 4),
+            nn.GELU(),
+            nn.Linear(embed_size * 4, embed_size),
+        )
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, mask=None):
+        # Self-attention with residual connection
+        attn_out, _ = self.attention(x, x, x, attn_mask=mask)
+        x = self.norm1(x + self.dropout(attn_out))
+        # Feed-forward with residual connection
+        ff_out = self.feed_forward(x)
+        x = self.norm2(x + self.dropout(ff_out))
+        return x
+
+# Example usage
+model = TransformerBlock(embed_size=512, heads=8)
+x = torch.randn(10, 32, 512)  # (seq_len, batch, embed)
+output = model(x)
+print(f"Output shape: {output.shape}")
 \`\`\`
 
-Inline code: \`const x = 42;\`
+### 4.2 JavaScript — API Handler
 
-## Math with KaTeX
+\`\`\`javascript
+import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 
-Inline math: The quadratic formula is $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+const app = express();
+app.use(express.json({ limit: '10mb' }));
 
-Block math:
+// Rate limiting for PDF generation
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests' }
+});
 
-$$
-E = mc^2
-$$
+app.post('/api/generate', limiter, async (req, res) => {
+  const { markdown, options } = req.body;
 
-More complex equations:
+  if (!markdown?.trim()) {
+    return res.status(400).json({ error: 'No markdown provided' });
+  }
 
-$$
-\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}
-$$
+  try {
+    const pdf = await generatePDF(markdown, options);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(pdf);
+  } catch (err) {
+    console.error('PDF error:', err);
+    res.status(500).json({ error: 'Generation failed' });
+  }
+});
 
-$$
-\\sum_{n=1}^{N} n = \\frac{N(N+1)}{2}
-$$
-
-Matrix:
-
-$$
-A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}
-$$
-
-## Table
-
-| Feature        | Status | Priority |
-|----------------|--------|----------|
-| PDF Export     | ✅ Done | High     |
-| Live Preview   | ✅ Done | High     |
-| KaTeX Math     | ✅ Done | Medium   |
-| PrismJS Code   | ✅ Done | Medium   |
-| Image Support  | ✅ Done | Medium   |
-
-## Blockquote
-
-> "The best way to predict the future is to invent it."
-> — Alan Kay
+app.listen(3000, () => console.log('Server running on :3000'));
+\`\`\`
 
 ---
 
-## Image
+## 5. Data Pipeline
 
-![Sample](https://picsum.photos/600/300)
+\`\`\`mermaid
+sequenceDiagram
+    participant U as User
+    participant A as API
+    participant Q as Queue
+    participant W as Worker
+    participant S as Storage
+
+    U->>A: POST /api/generate
+    A->>Q: Enqueue job
+    A-->>U: 202 Accepted
+    Q->>W: Process markdown
+    W->>W: Render PDF
+    W->>S: Store file
+    W-->>U: Webhook notification
+    U->>S: Download PDF
+\`\`\`
 
 ---
 
-*Generated with Markdown → PDF converter*
+## 6. Performance Metrics
+
+| Metric | Value | Description |
+|--------|-------|-------------|
+| Parse Speed | 12ms | Average markdown parse time |
+| PDF Gen | 180ms | End-to-end PDF generation |
+| File Size | 45KB | Average output PDF size |
+| Uptime | 99.97% | Service availability |
+| Latency P95 | 320ms | 95th percentile response time |
+
+---
+
+## 7. Neural Network Training Flow
+
+\`\`\`mermaid
+flowchart LR
+    A[Dataset] --> B[Preprocessing]
+    B --> C[Batch Loader]
+    C --> D[Forward Pass]
+    D --> E[Compute Loss]
+    E --> F[Backpropagation]
+    F --> G{Converged?}
+    G -->|No| D
+    G -->|Yes| H[Save Model]
+\`\`\`
+
+---
+
+## 8. Mathematical Foundations
+
+The softmax function normalizes logits into probabilities:
+
+$$
+\\sigma(z_i) = \\frac{e^{z_i}}{\\sum_{j=1}^{K} e^{z_j}}
+$$
+
+Batch normalization stabilizes training:
+
+$$
+\\hat{x}_i = \\frac{x_i - \\mu_B}{\\sqrt{\\sigma_B^2 + \\epsilon}}
+$$
+
+$$
+y_i = \\gamma \\hat{x}_i + \\beta
+$$
+
+The learning rate schedule with warmup:
+
+$$
+\\eta_t = \\eta_{\\min} + \\frac{1}{2}(\\eta_{\\max} - \\eta_{\\min})\\left(1 + \\cos\\left(\\frac{t}{T}\\pi\\right)\\right)
+$$
+
+---
+
+## 9. Conclusion
+
+md2pdf enables developers to create professional documents directly from Markdown. With support for:
+
+- **KaTeX** — Publication-quality math rendering
+- **Mermaid** — Architecture and flow diagrams
+- **PrismJS** — Syntax highlighting for 30+ languages
+- **GFM** — Tables, task lists, and strikethrough
+
+The tool is open source and available on GitHub.
+
+---
+
+*Made by [Gyaanendra](https://github.com/Gyaanendra) — [github.com/Gyaanendra/md2pdf](https://github.com/Gyaanendra/md2pdf)*
 `;
   onInput();
 });
