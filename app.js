@@ -356,6 +356,92 @@ modalCancel.addEventListener('click', function() { modalOverlay.classList.add('h
 modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) modalOverlay.classList.add('hidden'); });
 pdfTitleInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') modalConfirm.click(); });
 
+// ─── Client-Side PDF Generation Engine ───
+async function generatePdfClientSide(opts) {
+  var title = opts.title || 'Document';
+  var pageSize = opts.pageSize || 'A4';
+  var orientation = opts.orientation || 'portrait';
+  var margin = opts.margin || 'normal';
+
+  var marginsMap = {
+    normal: [15, 15, 15, 15],
+    narrow: [8, 8, 8, 8],
+    wide: [20, 25, 20, 25]
+  };
+  var pdfMargins = marginsMap[margin] || marginsMap.normal;
+
+  // Create document container for PDF rendering
+  var container = document.createElement('div');
+  container.className = 'markdown-body pdf-export-container';
+  container.style.padding = '0';
+  container.style.margin = '0';
+  container.style.width = '100%';
+  container.style.background = '#ffffff';
+
+  // Header banner
+  var header = document.createElement('div');
+  header.className = 'pdf-export-header';
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.borderBottom = '1px solid #e5e7eb';
+  header.style.paddingBottom = '8px';
+  header.style.marginBottom = '20px';
+  header.style.fontSize = '9pt';
+  header.style.color = '#6b7280';
+  header.innerHTML = '<span>' + title.replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString() + '</span>';
+  container.appendChild(header);
+
+  // Clone preview content
+  var content = preview.cloneNode(true);
+  
+  // Fix Mermaid SVG sizes in clone
+  var svgList = content.querySelectorAll('.mermaid svg');
+  svgList.forEach(function(svg) {
+    svg.style.maxWidth = '100%';
+    svg.style.height = 'auto';
+    svg.style.display = 'block';
+    svg.style.margin = '0 auto';
+  });
+
+  container.appendChild(content);
+
+  var filename = (title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document') + '.pdf';
+
+  if (typeof html2pdf !== 'undefined') {
+    var html2pdfOptions = {
+      margin: pdfMargins,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: pageSize.toLowerCase(), orientation: orientation },
+      pagebreak: { mode: ['css', 'legacy'] }
+    };
+    try {
+      await html2pdf().set(html2pdfOptions).from(container).save();
+      return;
+    } catch (e) {
+      console.warn('html2pdf export error, falling back to window.print:', e);
+    }
+  }
+
+  // Fallback to Window Print if html2pdf is missing or fails
+  var printWin = window.open('', '_blank');
+  printWin.document.write('<!DOCTYPE html><html><head><title>' + title + '</title>');
+  printWin.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">');
+  printWin.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">');
+  printWin.document.write('<link rel="stylesheet" href="style.css">');
+  printWin.document.write('<style>body{padding:20px;background:#fff;} .pdf-export-container{max-width:100%!important;}</style>');
+  printWin.document.write('</head><body>');
+  printWin.document.write(container.outerHTML);
+  printWin.document.write('</body></html>');
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function() {
+    printWin.print();
+    printWin.close();
+  }, 500);
+}
+
 modalConfirm.addEventListener('click', async function() {
   var title = pdfTitleInput.value.trim() || 'Document';
   var pageSize = pdfSizeSelect.value;
@@ -370,6 +456,8 @@ modalConfirm.addEventListener('click', async function() {
   var md = editor.value;
   if (includeToc) md = generateTOC(md);
 
+  var useClientFallback = false;
+
   try {
     var res = await fetch('/api/generate-pdf', {
       method: 'POST',
@@ -382,24 +470,47 @@ modalConfirm.addEventListener('click', async function() {
         margin: margin
       })
     });
-    if (!res.ok) {
-      var err = await res.json();
-      alert('Error: ' + (err.error || 'PDF generation failed'));
-      return;
+
+    if (res.ok) {
+      var contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/pdf')) {
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = (title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document') + '.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        btnDownload.classList.remove('loading');
+        btnDownload.disabled = false;
+        return;
+      }
     }
-    var blob = await res.blob();
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = (title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document') + '.pdf';
-    a.click();
-    URL.revokeObjectURL(url);
+
+    // If API response is not PDF (e.g. 500 error or JSON message), switch to client-side fallback
+    console.warn('API returned non-PDF response or status ' + res.status + ', using client-side generator...');
+    useClientFallback = true;
   } catch (err) {
-    alert('Network error: ' + err.message);
-  } finally {
-    btnDownload.classList.remove('loading');
-    btnDownload.disabled = false;
+    console.warn('Serverless endpoint unavailable or network issue, using client-side generator:', err);
+    useClientFallback = true;
   }
+
+  if (useClientFallback) {
+    try {
+      await generatePdfClientSide({
+        markdown: md,
+        title: title,
+        pageSize: pageSize,
+        orientation: orientation,
+        margin: margin
+      });
+    } catch (e) {
+      alert('PDF generation failed: ' + e.message);
+    }
+  }
+
+  btnDownload.classList.remove('loading');
+  btnDownload.disabled = false;
 });
 
 // ─── Sample document ───

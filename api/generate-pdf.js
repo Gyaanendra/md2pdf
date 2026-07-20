@@ -79,39 +79,56 @@ img{display:block;max-width:70%;height:auto;margin:12pt auto;border-radius:4px}
 
     const html = mdToHTML(markdown);
 
-    // Launch puppeteer-core
-    const puppeteer = require('puppeteer-core');
-    const chromium = require('@sparticuz/chromium');
+    // Launch puppeteer-core with graceful fallback
+    let puppeteer, chromium, browser;
+    try {
+      puppeteer = require('puppeteer-core');
+      chromium = require('@sparticuz/chromium');
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    });
+      const execPath = await chromium.executablePath();
+      browser = await puppeteer.launch({
+        args: chromium.args || ['--no-sandbox', '--disable-setuid-sandbox'],
+        defaultViewport: chromium.defaultViewport || { width: 1280, height: 800 },
+        executablePath: execPath,
+        headless: chromium.headless ?? true,
+      });
+    } catch (launchErr) {
+      console.error('Chromium serverless launch failed:', launchErr);
+      return res.status(500).json({
+        error: 'Serverless Chromium failed to launch: ' + (launchErr.message || 'Environment unsupported'),
+        fallbackToClient: true
+      });
+    }
 
-    const page = await browser.newPage();
-    await page.setContent('<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>' + css + '</style></head><body>' + html + '</body></html>', { waitUntil: 'networkidle0', timeout: 30000 });
+    try {
+      const page = await browser.newPage();
+      await page.setContent('<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>' + css + '</style></head><body>' + html + '</body></html>', { waitUntil: 'networkidle0', timeout: 25000 });
 
-    const pdf = await page.pdf({
-      format: pageSize || 'A4',
-      landscape: orientation === 'landscape',
-      margin: MARGINS[margin] || MARGINS.normal,
-      printBackground: true,
-      displayHeaderFooter: true,
-      headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString() + '</span></div>',
-      footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0">md2pdf v1.00.01 | Page <span class="pageNumber"></span> of <span class="totalPages"></span> | by Gyaanendra</div>'
-    });
+      const pdf = await page.pdf({
+        format: pageSize || 'A4',
+        landscape: orientation === 'landscape',
+        margin: MARGINS[margin] || MARGINS.normal,
+        printBackground: true,
+        displayHeaderFooter: true,
+        headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString() + '</span></div>',
+        footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0">md2pdf v1.00.01 | Page <span class="pageNumber"></span> of <span class="totalPages"></span> | by Gyaanendra</div>'
+      });
 
-    await browser.close();
+      await browser.close();
 
-    const safeName = (title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + safeName + '.pdf"');
-    res.send(Buffer.from(pdf));
+      const safeName = (title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="' + safeName + '.pdf"');
+      return res.send(Buffer.from(pdf));
+
+    } catch (renderErr) {
+      if (browser) await browser.close().catch(() => {});
+      console.error('PDF render error:', renderErr);
+      return res.status(500).json({ error: renderErr.message || 'PDF render failed', fallbackToClient: true });
+    }
 
   } catch (err) {
-    console.error('PDF error:', err);
-    res.status(500).json({ error: err.message || 'PDF generation failed' });
+    console.error('PDF API error:', err);
+    return res.status(500).json({ error: err.message || 'PDF generation failed', fallbackToClient: true });
   }
 };

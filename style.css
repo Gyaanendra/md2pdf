@@ -276,3 +276,18 @@ header {
 /* Empty State */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #9ca3af; text-align: center; gap: 8px; }
 .empty-state svg { opacity: 0.4; }
+
+/* ─── Print & PDF Export ─── */
+@media print {
+  header, .pane-header, .line-numbers, .gutter, .editor-pane, .modal-overlay { display: none !important; }
+  body, html, .container, .preview-pane, .preview-scroll { height: auto !important; overflow: visible !important; background: #ffffff !important; }
+  .preview-scroll { padding: 0 !important; }
+  .markdown-body { max-width: 100% !important; font-size: 11pt !important; }
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  pre, table, blockquote, .mermaid, .math-display { page-break-inside: avoid; }
+}
+
+.pdf-export-container { padding: 0; margin: 0; background: #ffffff; width: 100%; }
+.pdf-export-container h1, .pdf-export-container h2, .pdf-export-container h3 { page-break-after: avoid; }
+.pdf-export-container pre, .pdf-export-container table, .pdf-export-container blockquote, .pdf-export-container .mermaid, .pdf-export-container .math-display { page-break-inside: avoid; }
+
