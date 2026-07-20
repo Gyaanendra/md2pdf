@@ -57,7 +57,19 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeHighlight, [rehypeKatex, { trust: true, strict: false }]]}
+        rehypePlugins={[
+          rehypeHighlight,
+          [
+            rehypeKatex,
+            {
+              trust: true,
+              strict: false,
+              macros: {
+                "\\ce": "\\mathrm{#1}",
+              },
+            },
+          ],
+        ]}
         components={{
           pre({ children }: any) {
             // Unwrap pre if child is a Mermaid diagram
