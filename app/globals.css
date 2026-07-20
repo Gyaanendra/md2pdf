@@ -15,7 +15,27 @@ body {
   color: #0f172a !important;
 }
 
-/* Print Stylesheet for flawless browser printing */
+/* Page break rules for KaTeX math formulas, code blocks, diagrams, and headings */
+.katex-display,
+.katex,
+pre,
+table,
+tr,
+img,
+blockquote,
+.mermaid-wrapper,
+svg,
+.page-break-inside-avoid {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+}
+
+/* Print Stylesheet for flawless browser printing & PDF export */
 @media print {
   html, body {
     height: auto !important;
@@ -44,7 +64,7 @@ body {
     height: auto !important;
     overflow: visible !important;
     margin: 0 !important;
-    padding: 20mm 15mm !important;
+    padding: 15mm 15mm !important;
     box-shadow: none !important;
     position: static !important;
   }
@@ -55,15 +75,5 @@ body {
     overflow: visible !important;
     background-color: #ffffff !important;
     color: #000000 !important;
-  }
-
-  .page-break-inside-avoid, tr, img, pre, table, blockquote, .mermaid-container, svg {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    break-after: avoid !important;
-    page-break-after: avoid !important;
   }
 }

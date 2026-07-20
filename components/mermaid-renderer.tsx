@@ -21,9 +21,17 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
         const mermaid = (await import("mermaid")).default;
         mermaid.initialize({
           startOnLoad: false,
-          theme: "default",
+          theme: "neutral",
           securityLevel: "loose",
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
+          themeVariables: {
+            primaryColor: "#f8fafc",
+            primaryBorderColor: "#cbd5e1",
+            primaryTextColor: "#0f172a",
+            lineColor: "#64748b",
+            secondaryColor: "#f1f5f9",
+            tertiaryColor: "#ffffff",
+          },
           flowchart: { htmlLabels: true, curve: "basis" },
           sequence: { useMaxWidth: true, showSequenceNumbers: true },
         });
@@ -42,6 +50,7 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
             svgEl.style.height = "auto";
             svgEl.style.margin = "0 auto";
             svgEl.style.display = "block";
+            svgEl.style.backgroundColor = "#ffffff";
             setSvgContent(svgEl.outerHTML);
           } else {
             setSvgContent(svg);
@@ -65,10 +74,16 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
 
   if (error) {
     return (
-      <div className="my-4 p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-mono">
+      <div
+        className="my-4 p-4 rounded-lg text-xs font-mono"
+        style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", color: "#be123c" }}
+      >
         <div className="font-semibold mb-1">Mermaid Syntax Error:</div>
         <div>{error}</div>
-        <pre className="mt-2 p-2 bg-rose-100/50 rounded overflow-x-auto text-[11px]">
+        <pre
+          className="mt-2 p-2 rounded overflow-x-auto text-[11px]"
+          style={{ backgroundColor: "#ffe4e6" }}
+        >
           {chart}
         </pre>
       </div>
@@ -78,7 +93,8 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
   return (
     <div
       ref={containerRef}
-      className="mermaid-wrapper my-6 p-4 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto flex justify-center items-center shadow-xs page-break-inside-avoid"
+      className="mermaid-wrapper my-6 p-4 rounded-xl overflow-x-auto flex justify-center items-center shadow-xs page-break-inside-avoid"
+      style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0" }}
       dangerouslySetInnerHTML={{ __html: svgContent || `<div class="py-8 text-center text-xs text-slate-400 animate-pulse">Rendering diagram...</div>` }}
     />
   );

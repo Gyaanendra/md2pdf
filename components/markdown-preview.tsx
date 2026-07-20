@@ -6,7 +6,9 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import MermaidRenderer from "./mermaid-renderer";
+
 import "katex/dist/katex.min.css";
+import "katex/dist/contrib/mhchem";
 
 interface MarkdownPreviewProps {
   content: string;
@@ -54,7 +56,12 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             if (isInline) {
               return (
                 <code
-                  className="bg-slate-100 text-rose-600 px-1.5 py-0.5 rounded text-[13px] font-mono border border-slate-200/60"
+                  className="px-1.5 py-0.5 rounded text-[13px] font-mono"
+                  style={{
+                    backgroundColor: "#f1f5f9",
+                    color: "#e11d48",
+                    border: "1px solid #e2e8f0"
+                  }}
                   {...props}
                 >
                   {children}
@@ -62,12 +69,33 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               );
             }
 
+            const lang = (className || "").replace("language-", "").toUpperCase() || "CODE";
+
             return (
-              <div className="my-4 rounded-xl border border-slate-200 overflow-hidden shadow-xs page-break-inside-avoid bg-slate-900">
-                <div className="bg-slate-800/90 px-4 py-1.5 border-b border-slate-700/80 flex justify-between items-center text-[11px] font-mono text-slate-400">
-                  <span>{(className || "").replace("language-", "").toUpperCase() || "CODE"}</span>
+              <div
+                className="my-4 rounded-xl overflow-hidden page-break-inside-avoid shadow-xs"
+                style={{
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e2e8f0"
+                }}
+              >
+                <div
+                  className="px-4 py-1.5 flex justify-between items-center text-[11px] font-mono font-semibold"
+                  style={{
+                    backgroundColor: "#f1f5f9",
+                    borderBottom: "1px solid #e2e8f0",
+                    color: "#64748b"
+                  }}
+                >
+                  <span>{lang}</span>
                 </div>
-                <pre className="p-4 bg-slate-900 text-slate-100 overflow-x-auto text-xs font-mono leading-relaxed">
+                <pre
+                  className="p-4 overflow-x-auto text-xs font-mono leading-relaxed"
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    color: "#0f172a"
+                  }}
+                >
                   <code className={className} {...props}>
                     {children}
                   </code>
@@ -77,38 +105,83 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           },
           table({ children }) {
             return (
-              <div className="my-6 overflow-x-auto border border-slate-200 rounded-xl page-break-inside-avoid shadow-xs">
+              <div
+                className="my-6 overflow-x-auto rounded-xl page-break-inside-avoid shadow-xs"
+                style={{ border: "1px solid #e2e8f0" }}
+              >
                 <table className="w-full text-left text-sm border-collapse">{children}</table>
               </div>
             );
           },
           thead({ children }) {
-            return <thead className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-700">{children}</thead>;
+            return (
+              <thead
+                className="font-semibold"
+                style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#334155" }}
+              >
+                {children}
+              </thead>
+            );
           },
           th({ children }) {
             return <th className="px-4 py-2.5">{children}</th>;
           },
           td({ children }) {
-            return <td className="px-4 py-2 border-t border-slate-100 text-slate-600">{children}</td>;
+            return (
+              <td
+                className="px-4 py-2 text-slate-600"
+                style={{ borderTop: "1px solid #f1f5f9" }}
+              >
+                {children}
+              </td>
+            );
           },
           blockquote({ children }) {
             return (
-              <blockquote className="my-4 pl-4 pr-3 py-2 border-l-4 border-blue-500 bg-blue-50/60 text-slate-700 rounded-r-lg italic text-sm">
+              <blockquote
+                className="my-4 pl-4 pr-3 py-2 rounded-r-lg italic text-sm"
+                style={{
+                  borderLeft: "4px solid #2563eb",
+                  backgroundColor: "#eff6ff",
+                  color: "#1e3a8a"
+                }}
+              >
                 {children}
               </blockquote>
             );
           },
           h1({ children }) {
-            return <h1 className="text-3xl font-extrabold text-slate-900 pb-3 mb-6 border-b border-slate-200 text-center tracking-tight">{children}</h1>;
+            return (
+              <h1
+                className="text-3xl font-extrabold pb-3 mb-6 text-center tracking-tight"
+                style={{ color: "#0f172a", borderBottom: "1px solid #e2e8f0" }}
+              >
+                {children}
+              </h1>
+            );
           },
           h2({ children }) {
-            return <h2 className="text-xl font-bold text-slate-800 pt-6 pb-2 mb-4 border-b border-slate-100 tracking-tight">{children}</h2>;
+            return (
+              <h2
+                className="text-xl font-bold pt-6 pb-2 mb-4 tracking-tight"
+                style={{ color: "#1e293b", borderBottom: "1px solid #f1f5f9" }}
+              >
+                {children}
+              </h2>
+            );
           },
           h3({ children }) {
-            return <h3 className="text-base font-semibold text-slate-800 pt-4 mb-3 tracking-tight">{children}</h3>;
+            return (
+              <h3
+                className="text-base font-semibold pt-4 mb-3 tracking-tight"
+                style={{ color: "#334155" }}
+              >
+                {children}
+              </h3>
+            );
           },
           hr() {
-            return <hr className="my-8 border-t border-slate-200" />;
+            return <hr className="my-8" style={{ borderTop: "1px solid #e2e8f0" }} />;
           }
         }}
       >

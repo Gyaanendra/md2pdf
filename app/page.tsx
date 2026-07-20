@@ -44,7 +44,6 @@ export default function Home() {
 
   // Deep Color Sanitizer for html2canvas compatibility with Tailwind CSS v4 (lab / oklch functions)
   const sanitizeDocumentColors = (doc: Document) => {
-    // 1. Replace lab() / oklch() / color() in all <style> text content
     const styleTags = Array.from(doc.querySelectorAll("style"));
     styleTags.forEach((styleTag) => {
       if (styleTag.textContent && (styleTag.textContent.includes("lab(") || styleTag.textContent.includes("oklch("))) {
@@ -55,7 +54,6 @@ export default function Home() {
       }
     });
 
-    // 2. Convert elements with computed lab() or oklch() colors to explicit inline RGB
     const allElements = Array.from(doc.querySelectorAll("*"));
     allElements.forEach((el: any) => {
       try {
@@ -71,7 +69,7 @@ export default function Home() {
           }
         });
       } catch (err) {
-        // ignore errors on unreachable elements
+        // ignore errors
       }
     });
   };
@@ -83,7 +81,6 @@ export default function Home() {
     const element = document.getElementById("preview-content");
     if (!element) return;
 
-    // First sanitize live document style tags before html2canvas scans document.styleSheets
     sanitizeDocumentColors(document);
 
     const marginMm = options.margin === "narrow" ? 8 : options.margin === "wide" ? 25 : 15;
@@ -96,6 +93,10 @@ export default function Home() {
           margin: marginMm,
           filename: filename,
           image: { type: "jpeg", quality: 0.98 },
+          pagebreak: {
+            mode: ["avoid-all", "css", "legacy"],
+            avoid: ["tr", "img", "pre", "table", "blockquote", ".mermaid-wrapper", ".katex-display", "h1", "h2", "h3"]
+          },
           html2canvas: {
             scale: 2,
             useCORS: true,
@@ -162,7 +163,7 @@ export default function Home() {
       showToast("PDF downloaded successfully!", "success");
     } catch (err: any) {
       console.error("PDF export error:", err);
-      showToast("PDF generation fallback: launching Print dialog", "warning");
+      showToast("Launching print dialog for high-res PDF...", "warning");
       window.print();
     }
   };
