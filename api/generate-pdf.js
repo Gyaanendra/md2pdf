@@ -3,6 +3,14 @@ const katex = require('katex');
 // Try to load mhchem
 try { require('katex/contrib/mhchem/mhchem.js'); } catch(e) {}
 
+// Only import md-mermaid-pdf for local dev (not Vercel)
+let mdToPdfLocal = null;
+try {
+  if (!process.env.VERCEL) {
+    mdToPdfLocal = require('md-mermaid-pdf').mdToPdf;
+  }
+} catch(e) {}
+
 function renderKaTeX(md) {
   let result = md;
 
@@ -165,7 +173,8 @@ module.exports = async (req, res) => {
       });
     } catch (e) {
       // Fallback to md-mermaid-pdf for local dev
-      const { mdToPdf } = require('md-mermaid-pdf');
+      if (!mdToPdfLocal) throw new Error('No PDF engine available');
+      const mdToPdf = mdToPdfLocal;
       const withMath = renderKaTeX(markdown);
       const pdf = await mdToPdf({ content: withMath }, {
         launch_options: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
