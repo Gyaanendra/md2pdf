@@ -3,22 +3,10 @@
   "builds": [
     {
       "src": "api/generate-pdf.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 60
-      }
-    },
-    {
-      "src": "api/preview.js",
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/public/$1" }
-  ],
-  "outputDirectory": "public",
-  "env": {
-    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
-  }
+  "rewrites": [
+    { "source": "/api/generate-pdf", "destination": "/api/generate-pdf.js" }
+  ]
 }
