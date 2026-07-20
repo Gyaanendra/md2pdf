@@ -1,28 +1,41 @@
-# Next.js build and cache outputs
-.next/
-out/
-build/
-dist/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Dependencies
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Environment variables & local configuration
-.env
-.env*.local
+# testing
+/coverage
 
-# Logs
-*.log
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnpm-debug.log*
 
-# Vercel deployment folder
-.vercel/
+# env files (can opt-in for committing if needed)
+.env*
 
-# System / OS files
-.DS_Store
-Thumbs.db
-*.swp
-*.bak
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
