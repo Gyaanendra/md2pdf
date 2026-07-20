@@ -12,7 +12,6 @@ module.exports = async (req, res) => {
 
     // Lazy load dependencies
     const katex = require('katex');
-    try { require('katex/contrib/mhchem/mhchem.js'); } catch(e) {}
 
     const MARGINS = {
       normal: { top: '22mm', right: '18mm', bottom: '22mm', left: '18mm' },
@@ -102,7 +101,7 @@ img{display:block;max-width:70%;height:auto;margin:12pt auto;border-radius:4px}
 
     try {
       const page = await browser.newPage();
-      await page.setContent('<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>' + css + '</style></head><body>' + html + '</body></html>', { waitUntil: 'networkidle0', timeout: 25000 });
+      await page.setContent('<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js"></script><style>' + css + '</style></head><body>' + html + '</body></html>', { waitUntil: 'networkidle0', timeout: 25000 });
 
       const pdf = await page.pdf({
         format: pageSize || 'A4',

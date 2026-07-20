@@ -2,9 +2,6 @@ const express = require('express');
 const path = require('path');
 const katex = require('katex');
 
-// Load mhchem extension for chemistry equations
-require('katex/contrib/mhchem/mhchem.js');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -231,7 +228,7 @@ app.post('/api/generate-pdf', async (req, res) => {
     try {
       const page = await browser.newPage();
       const withMath = renderKaTeX(markdown);
-      const html = '<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>' + CSS + '</style></head><body><div class="markdown-body">' + withMath + '</div></body></html>';
+      const html = '<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js"></script><style>' + CSS + '</style></head><body><div class="markdown-body">' + withMath + '</div></body></html>';
       await page.setContent(html, { waitUntil: 'networkidle0', timeout: 25000 });
 
       const pdf = await page.pdf({
