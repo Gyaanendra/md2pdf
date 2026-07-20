@@ -9,32 +9,61 @@ body {
   color: #0f172a !important;
 }
 
-/* Light mode overrides for preview */
+/* Light mode overrides for markdown preview */
 .markdown-body {
   background-color: #ffffff !important;
   color: #0f172a !important;
 }
 
-/* Print Stylesheet */
+/* Print Stylesheet for flawless browser printing */
 @media print {
-  body {
+  html, body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
     background-color: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .no-print {
+  .no-print, header, nav, footer, .gutter {
     display: none !important;
+  }
+
+  main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
   }
 
   .print-container {
     width: 100% !important;
     max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 20mm 15mm !important;
     box-shadow: none !important;
+    position: static !important;
   }
 
-  .page-break-inside-avoid {
+  .markdown-body {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .page-break-inside-avoid, tr, img, pre, table, blockquote, .mermaid-container, svg {
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 }

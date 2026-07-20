@@ -14,14 +14,11 @@ interface MarkdownPreviewProps {
 
 export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any).katexMhchemLoaded) {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js";
-      script.async = true;
-      script.onload = () => {
-        (window as any).katexMhchemLoaded = true;
-      };
-      document.head.appendChild(script);
+    if (typeof window !== "undefined") {
+      const katex = (window as any).katex;
+      if (katex && !katex.__defineMacro) {
+        katex.__defineMacro = () => {};
+      }
     }
   }, []);
 

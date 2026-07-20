@@ -60,6 +60,30 @@ export default function Home() {
     window.print();
   };
 
+  // Sanitize stylesheet modern color functions (lab, oklch) for html2canvas compatibility
+  const sanitizeDocumentStyles = (clonedDoc: Document) => {
+    const styles = Array.from(clonedDoc.querySelectorAll("style"));
+    styles.forEach((styleTag) => {
+      if (styleTag.textContent) {
+        styleTag.textContent = styleTag.textContent
+          .replace(/lab\([^)]+\)/gi, "rgb(15, 23, 42)")
+          .replace(/oklch\([^)]+\)/gi, "rgb(15, 23, 42)")
+          .replace(/color\(srgb[^)]+\)/gi, "rgb(15, 23, 42)");
+      }
+    });
+
+    const elements = Array.from(clonedDoc.querySelectorAll("*"));
+    elements.forEach((el: any) => {
+      if (el.style && el.style.cssText) {
+        if (el.style.cssText.includes("lab(") || el.style.cssText.includes("oklch(")) {
+          el.style.cssText = el.style.cssText
+            .replace(/lab\([^)]+\)/gi, "rgb(15, 23, 42)")
+            .replace(/oklch\([^)]+\)/gi, "rgb(15, 23, 42)");
+        }
+      }
+    });
+  };
+
   // PDF Download Engine (Primary html2pdf.js CDN, Fallback jsPDF+html2canvas)
   const handleExportPdf = async (options: ExportOptions) => {
     showToast("Generating PDF download...", "info");
@@ -77,7 +101,14 @@ export default function Home() {
           margin: marginMm,
           filename: filename,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            onclone: (clonedDoc: Document) => {
+              sanitizeDocumentStyles(clonedDoc);
+            }
+          },
           jsPDF: { unit: "mm", format: options.pageSize.toLowerCase(), orientation: options.orientation }
         };
         await html2pdf().set(opt).from(element).save();
@@ -96,6 +127,9 @@ export default function Home() {
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
+        onclone: (clonedDoc: Document) => {
+          sanitizeDocumentStyles(clonedDoc);
+        }
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.98);
@@ -202,7 +236,7 @@ export default function Home() {
       {/* Split Pane Interface */}
       <main className="flex-1 flex overflow-hidden relative">
         {/* Left Pane: Line-Numbered Markdown Editor */}
-        <div style={{ width: `${splitRatio}%` }} className="h-full overflow-hidden">
+        <div style={{ width: `${splitRatio}%` }} className="h-full overflow-hidden no-print">
           <MarkdownEditor
             value={markdown}
             onChange={setMarkdown}
@@ -217,7 +251,7 @@ export default function Home() {
             document.body.style.cursor = "col-resize";
             document.body.style.userSelect = "none";
           }}
-          className="no-print w-1 bg-slate-200 hover:bg-blue-500 cursor-col-resize transition-colors z-20 flex items-center justify-center group"
+          className="no-print gutter w-1 bg-slate-200 hover:bg-blue-500 cursor-col-resize transition-colors z-20 flex items-center justify-center group"
         >
           <div className="w-0.5 h-6 bg-slate-400 group-hover:bg-white rounded-full" />
         </div>
