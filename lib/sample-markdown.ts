@@ -1,54 +1,37 @@
 export const SAMPLE_MARKDOWN = `# AI Research & Engineering Report
 
-> A technical document showcasing **md2pdf** with math, code, diagrams, chemistry, and images.
+> A technical document showcasing **md2pdf v2.0** with math, code, diagrams, chemistry, and images.
 
----
+## 1. Executive Summary
 
-## 1. Introduction
+This report demonstrates **md2pdf v2.0** — a modern tool built with Next.js, React Markdown, KaTeX, and Mermaid.js that converts Markdown into print-ready PDFs. It supports **KaTeX math formulas**, **chemical equations**, **syntax-highlighted code**, **interactive Mermaid diagrams**, **footnotes**[^1], images, tables, and custom print layouts.
 
-This report demonstrates **md2pdf v2.0** — a modern tool built with Next.js, React Markdown, KaTeX, and Mermaid.js that converts Markdown into print-ready PDFs.
-
-It supports **KaTeX math formulas**, **chemical equations**, **syntax-highlighted code**, **interactive Mermaid diagrams**, **footnotes**[^1], images, tables, and custom print layouts.
-
-![Neural Network Architecture](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=350&fit=crop)
-
----
+![Neural Network Architecture](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=300&fit=crop)
 
 ## 2. Machine Learning Foundations
 
 ### 2.1 Binary Cross-Entropy Loss
-
 $$\\mathcal{L} = -\\frac{1}{N} \\sum_{i=1}^{N} \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]$$
 
 ### 2.2 Gradient Descent Update Rule
-
 $$\\theta_{t+1} = \\theta_t - \\eta \\nabla_\\theta \\mathcal{L}(\\theta_t)$$
 
 ### 2.3 Scaled Dot-Product Attention
-
 $$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V$$
-
----
 
 ## 3. Chemical Reactions & Synthesis
 
 ### 3.1 Methane Combustion
-
 $$\\ce{CH4 + 2O2 -> CO2 + 2H2O}$$
 
 ### 3.2 Ammonia Synthesis (Haber-Bosch Process)
-
 $$\\ce{N2 + 3H2 <=> 2NH3}$$
 
 ### 3.3 Ethanol Dehydration
-
 $$\\ce{CH3CH2OH ->[H2SO4][\\Delta] CH2=CH2 + H2O}$$
 
 ### 3.4 Neutralization Reaction
-
 $$\\ce{HCl + NaOH -> NaCl + H2O}$$
-
----
 
 ## 4. System Architecture
 
@@ -64,8 +47,6 @@ graph TD
     F --> G
     G --> H[High-Precision PDF Document]
 \`\`\`
-
----
 
 ## 5. Model Training Code
 
@@ -86,8 +67,6 @@ def train_epoch(model, dataloader, optimizer, criterion):
     return total_loss / len(dataloader)
 \`\`\`
 
----
-
 ## 6. Real-Time Pipeline Sequence
 
 \`\`\`mermaid
@@ -103,18 +82,14 @@ sequenceDiagram
     Exporter-->>User: Download Print-Ready PDF
 \`\`\`
 
----
-
 ## 7. Performance Benchmarks
 
 | Metric | md2pdf v1 (Legacy) | md2pdf v2 (Next.js) | Improvement |
 |--------|---------------------|----------------------|-------------|
 | Render Speed | 120ms | 14ms | **8.5x Faster** |
-| PDF Export | Serverless Puppeteer (Fails) | Browser Native / html2pdf | **100% Reliable** |
-| Vercel Overhead | High Memory (Chromium) | Zero Serverless Memory | **100% Free** |
-| Math Accuracy | 98% | 100% (KaTeX) | **Exact** |
-
----
+| PDF Export | Serverless Puppeteer | Puppeteer / Local Chromium | **100% Crisp Vector** |
+| Memory Overhead | High Memory (Chromium) | Optimized Stream | **High Efficiency** |
+| Math Accuracy | 98% | 100% (KaTeX + mhchem) | **Exact** |
 
 ## 8. Data Processing Workflow
 
@@ -124,16 +99,12 @@ flowchart LR
     Clean --> Parse[Parse Syntax Tree]
     Parse --> SVG[Generate Mermaid SVGs]
     SVG --> Render[Render DOM Preview]
-    Render --> Export[Native Browser Print / PDF]
+    Render --> Export[Native Puppeteer PDF]
 \`\`\`
-
----
 
 ## 9. Footnotes & Attribution
 
 [^1]: Footnotes are native markdown extensions rendered with automatic back-links.
-
----
 
 *Made with ❤️ by [Gyaanendra](https://github.com/Gyaanendra)*
 `;

@@ -23,65 +23,135 @@ export async function POST(req: NextRequest) {
   <title>${title || "Document"}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-light.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js"></script>
   <style>
+    @page {
+      size: ${options?.pageSize || "A4"} ${options?.orientation || "portrait"};
+      margin: ${options?.margin === "narrow" ? "8mm" : options?.margin === "wide" ? "25mm" : "12mm"};
+    }
     *, ::before, ::after {
       box-sizing: border-box;
     }
     body {
       margin: 0;
-      padding: 30px 40px;
+      padding: 0;
       background-color: #ffffff;
-      color: #1f2328;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
     .markdown-body {
       box-sizing: border-box;
       min-width: 200px;
       max-width: 100%;
     }
+    h1 {
+      font-size: 2.1em;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: #0f172a;
+      text-align: center;
+      margin-top: 0.5em;
+      margin-bottom: 0.6em;
+      padding-bottom: 0.4em;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    h2 {
+      font-size: 1.35em;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: #1e293b;
+      margin-top: 1.25em;
+      margin-bottom: 0.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 1px solid #f1f5f9;
+      break-after: avoid;
+    }
+    h3 {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 1em;
+      margin-bottom: 0.3em;
+      break-after: avoid;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 0.7em;
+    }
+    hr {
+      height: 0;
+      margin: 1.25em 0;
+      border: 0;
+      border-top: 1px solid #e2e8f0;
+    }
     .katex-display {
+      margin: 1em 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
       break-inside: avoid !important;
-      page-break-inside: avoid !important;
-      margin: 1.25em 0 !important;
     }
     .katex {
       font-size: 1.05em;
     }
-    pre, code, blockquote, table, tr, img, .mermaid-wrapper, svg {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-    }
-    h1, h2, h3, h4, h5, h6 {
-      break-after: avoid !important;
-      page-break-after: avoid !important;
+    pre, code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     }
     pre {
-      background-color: #f6f8fa !important;
-      border: 1px solid #d0d7de !important;
-      border-radius: 6px !important;
-      padding: 16px !important;
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      padding: 14px 16px !important;
+      margin: 1em 0 !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
+      break-inside: avoid !important;
     }
     blockquote {
-      border-left: 4px solid #0969da !important;
-      color: #57606a !important;
-      background-color: #f6f8fa !important;
+      border-left: 4px solid #0284c7 !important;
+      color: #0369a1 !important;
+      background-color: #f0f9ff !important;
+      border-radius: 0 8px 8px 0 !important;
       padding: 8px 16px !important;
-      margin: 16px 0 !important;
+      margin: 1em 0 !important;
+      font-style: italic;
     }
     table {
       border-collapse: collapse;
       width: 100%;
-      margin: 16px 0;
+      margin: 1em 0;
+      break-inside: avoid;
     }
     table th, table td {
-      border: 1px solid #d0d7de;
+      border: 1px solid #e2e8f0;
       padding: 8px 12px;
     }
     table th {
-      background-color: #f6f8fa;
+      background-color: #f8fafc;
       font-weight: 600;
+      color: #334155;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 1em auto;
+      display: block;
+      break-inside: avoid;
+    }
+    .mermaid-wrapper {
+      margin: 1.25em 0;
+      padding: 16px;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      break-inside: avoid !important;
+    }
+    tr {
+      break-inside: avoid !important;
     }
   </style>
 </head>
@@ -92,7 +162,7 @@ export async function POST(req: NextRequest) {
 
     await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
 
-    const marginValue = options?.margin === "narrow" ? "8mm" : options?.margin === "wide" ? "25mm" : "15mm";
+    const marginValue = options?.margin === "narrow" ? "8mm" : options?.margin === "wide" ? "25mm" : "12mm";
     const format = options?.pageSize || "A4";
 
     const pdfBuffer = await page.pdf({
