@@ -6,7 +6,7 @@ import MarkdownEditor from "@/components/markdown-editor";
 import MarkdownPreview from "@/components/markdown-preview";
 import PdfExportModal, { ExportOptions } from "@/components/pdf-export-modal";
 import { SAMPLE_MARKDOWN } from "@/lib/sample-markdown";
-import { formatFilename } from "@/lib/utils";
+import { formatFilename, extractMarkdownTitle } from "@/lib/utils";
 import { Check, Info, AlertTriangle, XCircle } from "lucide-react";
 
 interface Toast {
@@ -208,6 +208,7 @@ export default function Home() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleExportPdf}
+        defaultTitle={extractMarkdownTitle(markdown)}
       />
     </div>
   );

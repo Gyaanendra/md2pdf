@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, Download } from "lucide-react";
+import { X, FileText, Download, Sparkles } from "lucide-react";
 import { formatFilename } from "@/lib/utils";
 
 interface PdfExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExport: (options: ExportOptions) => Promise<void>;
+  defaultTitle?: string;
 }
 
 export interface ExportOptions {
@@ -19,13 +20,19 @@ export interface ExportOptions {
   includeToc: boolean;
 }
 
-export default function PdfExportModal({ isOpen, onClose, onExport }: PdfExportModalProps) {
-  const [title, setTitle] = useState("AI Research Report");
+export default function PdfExportModal({ isOpen, onClose, onExport, defaultTitle = "Document" }: PdfExportModalProps) {
+  const [title, setTitle] = useState(defaultTitle);
   const [pageSize, setPageSize] = useState<"A4" | "Letter" | "Legal" | "A3" | "A5">("A4");
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [margin, setMargin] = useState<"normal" | "narrow" | "wide">("normal");
   const [includeToc, setIncludeToc] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(defaultTitle);
+    }
+  }, [isOpen, defaultTitle]);
 
   if (!isOpen) return null;
 
@@ -33,7 +40,7 @@ export default function PdfExportModal({ isOpen, onClose, onExport }: PdfExportM
     setLoading(true);
     try {
       await onExport({
-        title: title.trim() || "Document",
+        title: title.trim() || defaultTitle || "Document",
         pageSize,
         orientation,
         margin,
@@ -77,15 +84,20 @@ export default function PdfExportModal({ isOpen, onClose, onExport }: PdfExportM
           <div className="p-6 space-y-4 text-xs">
             {/* Document Title */}
             <div>
-              <label className="block text-slate-700 font-medium mb-1.5">
-                Document Title
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-slate-700 font-medium">
+                  Document Title
+                </label>
+                <span className="text-[10px] text-blue-600 font-medium flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Auto-detected from Markdown
+                </span>
+              </div>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="My Document Title"
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                 autoFocus
               />
             </div>
@@ -135,9 +147,9 @@ export default function PdfExportModal({ isOpen, onClose, onExport }: PdfExportM
                   onChange={(e) => setMargin(e.target.value as any)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
-                  <option value="normal">Normal (15mm)</option>
-                  <option value="narrow">Narrow (8mm)</option>
-                  <option value="wide">Wide (25mm)</option>
+                  <option value="normal">Normal (10mm)</option>
+                  <option value="narrow">Narrow (5mm)</option>
+                  <option value="wide">Wide (18mm)</option>
                 </select>
               </div>
 
