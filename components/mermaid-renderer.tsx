@@ -52,9 +52,8 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
           const svgEl = doc.querySelector("svg");
           if (svgEl) {
             svgEl.removeAttribute("height");
-            svgEl.style.maxWidth = "100%";
-            svgEl.style.maxHeight = "250px";
-            svgEl.style.width = "auto";
+            svgEl.style.width = "100%";
+            svgEl.style.maxWidth = "680px";
             svgEl.style.height = "auto";
             svgEl.style.margin = "0 auto";
             svgEl.style.display = "block";
@@ -105,7 +104,7 @@ export default function MermaidRenderer({ chart }: MermaidRendererProps) {
     <div
       ref={containerRef}
       data-rendered={isRendered ? "true" : "false"}
-      className="mermaid-wrapper my-3 p-3 rounded-xl overflow-x-auto flex justify-center items-center page-break-inside-avoid"
+      className="mermaid-wrapper my-4 p-4 rounded-xl overflow-x-auto flex justify-center items-center page-break-inside-avoid"
       style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0" }}
       dangerouslySetInnerHTML={{ __html: svgContent || `<div class="py-6 text-center text-xs text-slate-400 animate-pulse">Rendering diagram...</div>` }}
     />

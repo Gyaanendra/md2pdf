@@ -155,6 +155,16 @@ export async function POST(req: NextRequest) {
       display: inline-block !important;
     }
     
+    /* Override pre container when holding Mermaid diagrams */
+    .markdown-body pre:has(.mermaid-wrapper),
+    .markdown-body pre.language-mermaid {
+      background: transparent !important;
+      background-color: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+
     /* Gruvbox Dark Code Block Styling */
     .markdown-body pre {
       background-color: #1d2021 !important;
@@ -260,17 +270,21 @@ export async function POST(req: NextRequest) {
       display: block;
       break-inside: avoid;
     }
+    
+    /* Clean Light Mermaid Container & Wide Scale */
     .mermaid-wrapper {
       margin: 0.75em 0 !important;
-      padding: 8px !important;
+      padding: 12px !important;
       background-color: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
       border-radius: 8px !important;
+      box-shadow: none !important;
       break-inside: avoid !important;
     }
     .mermaid-wrapper svg {
-      max-height: 230px !important;
-      width: auto !important;
+      width: 100% !important;
+      max-width: 680px !important;
+      height: auto !important;
       margin: 0 auto !important;
       display: block !important;
       background-color: #ffffff !important;

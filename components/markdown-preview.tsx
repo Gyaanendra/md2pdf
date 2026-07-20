@@ -59,6 +59,17 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, [rehypeKatex, { trust: true, strict: false }]]}
         components={{
+          pre({ children }: any) {
+            // Unwrap pre if child is a Mermaid diagram
+            if (
+              React.isValidElement(children) &&
+              ((children.props as any)?.className?.includes("language-mermaid") ||
+                (children.type as any) === MermaidRenderer)
+            ) {
+              return <>{children}</>;
+            }
+            return <div className="m-0 p-0">{children}</div>;
+          },
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-mermaid/.exec(className || "");
             const isInline = inline || (!match && !className?.includes("language-") && !className?.includes("hljs"));
