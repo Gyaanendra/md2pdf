@@ -50,7 +50,11 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   }
 
   return (
-    <div id="preview-content" className="markdown-body prose max-w-none prose-slate prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-img:rounded-xl prose-img:mx-auto prose-img:shadow-xs">
+    <div
+      id="preview-content"
+      className="markdown-body prose max-w-none prose-slate prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-img:rounded-xl prose-img:mx-auto prose-img:shadow-xs"
+      style={{ fontFamily: "'Inter', 'Roboto', sans-serif" }}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, [rehypeKatex, { trust: true, strict: false }]]}
@@ -67,11 +71,12 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             if (isInline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded text-[13px] font-mono font-medium"
+                  className="px-1.5 py-0.5 rounded text-[13px] font-medium"
                   style={{
                     backgroundColor: "#3c3836",
                     color: "#fe8019",
-                    border: "1px solid #504945"
+                    border: "1px solid #504945",
+                    fontFamily: "'Roboto Mono', monospace"
                   }}
                   {...props}
                 >
@@ -85,7 +90,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
 
             return (
               <div
-                className="my-4 rounded-xl overflow-hidden page-break-inside-avoid shadow-md"
+                className="my-3 rounded-xl overflow-hidden page-break-inside-avoid shadow-md"
                 style={{
                   backgroundColor: "#1d2021",
                   border: "1px solid #3c3836"
@@ -93,11 +98,12 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               >
                 {/* Gruvbox Dark Window Header Bar */}
                 <div
-                  className="px-4 py-2 flex items-center justify-between text-[11px] font-mono font-bold tracking-wider select-none"
+                  className="px-4 py-1.5 flex items-center justify-between text-[11px] font-bold tracking-wider select-none"
                   style={{
                     backgroundColor: "#282828",
                     borderBottom: "1px solid #3c3836",
-                    color: "#fabd2f"
+                    color: "#fabd2f",
+                    fontFamily: "'Roboto Mono', monospace"
                   }}
                 >
                   <div className="flex items-center gap-1.5">
@@ -106,16 +112,17 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#b8bb26" }} />
                     <span className="ml-2 font-bold uppercase tracking-wider text-[#fabd2f]">{lang}</span>
                   </div>
-                  <span className="text-[#83a598] font-mono text-[10px] font-medium">Gruvbox Dark</span>
+                  <span className="text-[#83a598] text-[10px] font-medium">Gruvbox Dark</span>
                 </div>
                 <pre
-                  className="p-4 overflow-x-auto text-xs font-mono leading-relaxed m-0"
+                  className="p-4 overflow-x-auto text-xs leading-relaxed m-0"
                   style={{
                     backgroundColor: "#1d2021",
-                    color: "#ebdbb2"
+                    color: "#ebdbb2",
+                    fontFamily: "'Roboto Mono', monospace"
                   }}
                 >
-                  <code className={className} style={{ color: "#ebdbb2" }} {...props}>
+                  <code className={className} style={{ color: "#ebdbb2", fontFamily: "'Roboto Mono', monospace" }} {...props}>
                     {children}
                   </code>
                 </pre>
@@ -125,7 +132,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           table({ children }) {
             return (
               <div
-                className="my-6 overflow-x-auto rounded-xl page-break-inside-avoid shadow-xs"
+                className="my-4 overflow-x-auto rounded-xl page-break-inside-avoid shadow-xs"
                 style={{ border: "1px solid #e2e8f0" }}
               >
                 <table className="w-full text-left text-sm border-collapse">{children}</table>
@@ -143,7 +150,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             );
           },
           th({ children }) {
-            return <th className="px-4 py-2.5">{children}</th>;
+            return <th className="px-4 py-2">{children}</th>;
           },
           td({ children }) {
             return (
@@ -158,7 +165,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           blockquote({ children }) {
             return (
               <blockquote
-                className="my-4 pl-4 pr-3 py-2 rounded-r-lg italic text-sm"
+                className="my-3 pl-4 pr-3 py-2 rounded-r-lg italic text-sm"
                 style={{
                   borderLeft: "4px solid #0284c7",
                   backgroundColor: "#f0f9ff",
@@ -172,7 +179,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           h1({ children }) {
             return (
               <h1
-                className="text-3xl font-extrabold pb-3 mb-6 text-center tracking-tight"
+                className="text-2xl md:text-3xl font-extrabold pb-2 mb-4 text-center tracking-tight"
                 style={{ color: "#0f172a", borderBottom: "1px solid #e2e8f0" }}
               >
                 {children}
@@ -182,7 +189,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           h2({ children }) {
             return (
               <h2
-                className="text-xl font-bold pt-6 pb-2 mb-4 tracking-tight"
+                className="text-lg md:text-xl font-bold pt-4 pb-1.5 mb-3 tracking-tight"
                 style={{ color: "#1e293b", borderBottom: "1px solid #f1f5f9" }}
               >
                 {children}
@@ -192,7 +199,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
           h3({ children }) {
             return (
               <h3
-                className="text-base font-semibold pt-4 mb-3 tracking-tight"
+                className="text-sm md:text-base font-semibold pt-2 mb-2 tracking-tight"
                 style={{ color: "#334155" }}
               >
                 {children}
@@ -200,7 +207,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             );
           },
           hr() {
-            return <hr className="my-8" style={{ borderTop: "1px solid #e2e8f0" }} />;
+            return <hr className="my-6" style={{ borderTop: "1px solid #e2e8f0" }} />;
           }
         }}
       >
