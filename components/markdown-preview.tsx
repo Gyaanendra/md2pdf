@@ -18,7 +18,7 @@ if (typeof window !== "undefined") {
 try {
   require("katex/dist/contrib/mhchem");
 } catch (e) {
-  // fallback if already loaded
+  // fallback
 }
 
 interface MarkdownPreviewProps {
@@ -67,7 +67,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             if (isInline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded text-[13px] font-mono"
+                  className="px-1.5 py-0.5 rounded text-[13px] font-mono font-medium"
                   style={{
                     backgroundColor: "#3c3836",
                     color: "#fe8019",
@@ -91,9 +91,9 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                   border: "1px solid #3c3836"
                 }}
               >
-                {/* Gruvbox Dark Window Header */}
+                {/* Gruvbox Dark Window Header Bar */}
                 <div
-                  className="px-4 py-2 flex justify-between items-center text-[11px] font-mono font-bold tracking-wider select-none"
+                  className="px-4 py-2 flex items-center justify-between text-[11px] font-mono font-bold tracking-wider select-none"
                   style={{
                     backgroundColor: "#282828",
                     borderBottom: "1px solid #3c3836",
@@ -104,7 +104,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fb4934" }} />
                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fabd2f" }} />
                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#b8bb26" }} />
-                    <span className="ml-2 font-bold text-[#ebdbb2]">{lang}</span>
+                    <span className="ml-2 font-bold uppercase tracking-wider text-[#fabd2f]">{lang}</span>
                   </div>
                   <span className="text-[#83a598] font-mono text-[10px] font-medium">Gruvbox Dark</span>
                 </div>
@@ -115,7 +115,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                     color: "#ebdbb2"
                   }}
                 >
-                  <code className={className} {...props}>
+                  <code className={className} style={{ color: "#ebdbb2" }} {...props}>
                     {children}
                   </code>
                 </pre>

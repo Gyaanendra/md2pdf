@@ -97,48 +97,75 @@ export async function POST(req: NextRequest) {
     .katex {
       font-size: 1.05em;
     }
-    pre, code {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    }
-    pre {
+    
+    /* Gruvbox Dark High-Specificity Code Styling */
+    .markdown-body pre {
       background-color: #1d2021 !important;
       border: 1px solid #3c3836 !important;
       border-radius: 8px !important;
       padding: 0 !important;
-      margin: 1em 0 !important;
-      font-size: 12px !important;
-      line-height: 1.5 !important;
+      margin: 1.25em 0 !important;
+      color: #ebdbb2 !important;
+      overflow: hidden !important;
       break-inside: avoid !important;
     }
-    pre code {
+    .markdown-body pre code {
       background-color: #1d2021 !important;
       color: #ebdbb2 !important;
       padding: 14px 16px !important;
-      display: block;
+      display: block !important;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
     }
-    /* Gruvbox Syntax Highlighting Tokens */
-    .hljs-keyword, .hljs-selector-tag, .hljs-subst, .hljs-meta {
+    .markdown-body pre code span {
+      color: #ebdbb2;
+    }
+    
+    /* Gruvbox Token Highlighting Specificity */
+    .markdown-body pre code .hljs-keyword,
+    .markdown-body pre code .hljs-selector-tag,
+    .markdown-body pre code .hljs-subst,
+    .markdown-body pre code .hljs-meta {
       color: #fb4934 !important;
-      font-weight: 600;
+      font-weight: 600 !important;
     }
-    .hljs-string, .hljs-title, .hljs-section, .hljs-attribute, .hljs-literal, .hljs-template-tag, .hljs-template-variable, .hljs-type {
+    .markdown-body pre code .hljs-string,
+    .markdown-body pre code .hljs-title,
+    .markdown-body pre code .hljs-section,
+    .markdown-body pre code .hljs-attribute,
+    .markdown-body pre code .hljs-literal,
+    .markdown-body pre code .hljs-template-tag,
+    .markdown-body pre code .hljs-template-variable,
+    .markdown-body pre code .hljs-type {
       color: #b8bb26 !important;
     }
-    .hljs-comment, .hljs-quote, .hljs-deletion {
+    .markdown-body pre code .hljs-comment,
+    .markdown-body pre code .hljs-quote,
+    .markdown-body pre code .hljs-deletion {
       color: #928374 !important;
-      font-style: italic;
+      font-style: italic !important;
     }
-    .hljs-number, .hljs-symbol, .hljs-bullet, .hljs-link {
+    .markdown-body pre code .hljs-number,
+    .markdown-body pre code .hljs-symbol,
+    .markdown-body pre code .hljs-bullet,
+    .markdown-body pre code .hljs-link {
       color: #d3869b !important;
     }
-    .hljs-title.function_, .hljs-function .hljs-title, .hljs-name {
+    .markdown-body pre code .hljs-title.function_,
+    .markdown-body pre code .hljs-function .hljs-title,
+    .markdown-body pre code .hljs-name {
       color: #8ec07c !important;
-      font-weight: 600;
+      font-weight: 600 !important;
     }
-    .hljs-variable, .hljs-attr, .hljs-params {
+    .markdown-body pre code .hljs-variable,
+    .markdown-body pre code .hljs-attr,
+    .markdown-body pre code .hljs-params,
+    .markdown-body pre code .hljs-property {
       color: #83a598 !important;
     }
-    .hljs-built_in, .hljs-class .hljs-title {
+    .markdown-body pre code .hljs-built_in,
+    .markdown-body pre code .hljs-class .hljs-title {
       color: #fabd2f !important;
     }
 
