@@ -16,39 +16,34 @@ const previewScroll = document.getElementById('preview-scroll');
 
 let debounceTimer = null;
 
-// ─── Line numbers ───
 function updateLineNumbers() {
   const lines = editor.value.split('\n').length;
   let html = '';
-  for (let i = 1; i <= lines; i++) html += `<span>${i}</span>`;
+  for (let i = 1; i <= lines; i++) html += '<span>' + i + '</span>';
   lineNumbers.innerHTML = html;
 }
 
-// ─── Sync scroll (editor ↔ line numbers) ───
 editor.addEventListener('scroll', () => {
   lineNumbers.scrollTop = editor.scrollTop;
 });
 
-// ─── Cursor position ───
 function updateCursorPos() {
   const val = editor.value;
   const pos = editor.selectionStart;
   const before = val.substring(0, pos);
   const ln = before.split('\n').length;
   const col = pos - before.lastIndexOf('\n');
-  cursorPos.textContent = `Ln ${ln}, Col ${col}`;
+  cursorPos.textContent = 'Ln ' + ln + ', Col ' + col;
 }
 editor.addEventListener('input', updateCursorPos);
 editor.addEventListener('click', updateCursorPos);
 editor.addEventListener('keyup', updateCursorPos);
 
-// ─── Word count ───
 function updateWordCount() {
   const words = editor.value.trim() ? editor.value.trim().split(/\s+/).length : 0;
-  wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+  wordCount.textContent = words + ' word' + (words !== 1 ? 's' : '');
 }
 
-// ─── Markdown rendering ───
 function updatePreview() {
   const md = editor.value;
   updateLineNumbers();
@@ -56,121 +51,100 @@ function updatePreview() {
   updateCursorPos();
 
   if (!md.trim()) {
-    preview.innerHTML = `
-      <div class="empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
-        <span>Start typing markdown on the left</span>
-      </div>`;
+    preview.innerHTML = '<div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Start typing markdown on the left</span></div>';
     return;
   }
 
   if (typeof marked === 'undefined') return;
 
-  // ── Step 1: Extract math blocks before marked touches them ──
   const mathBlocks = [];
   let processed = md;
 
-  // Extract display math $$...$$
-  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
-    const id = mathBlocks.length;
-    mathBlocks.push({ type: 'display', content });
-    return `%%MATH_DISPLAY_${id}%%`;
+  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
+    var id = mathBlocks.length;
+    mathBlocks.push({ type: 'display', content: content });
+    return '%%MATH_DISPLAY_' + id + '%%';
   });
 
-  // Extract inline math $...$
-  processed = processed.replace(/\$([^\$\n]+?)\$/g, (match, content) => {
-    const id = mathBlocks.length;
-    mathBlocks.push({ type: 'inline', content });
-    return `%%MATH_INLINE_${id}%%`;
+  processed = processed.replace(/\$([^\$\n]+?)\$/g, function(match, content) {
+    var id = mathBlocks.length;
+    mathBlocks.push({ type: 'inline', content: content });
+    return '%%MATH_INLINE_' + id + '%%';
   });
 
-  // Extract block math \[...\]
-  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
-    const id = mathBlocks.length;
-    mathBlocks.push({ type: 'display', content });
-    return `%%MATH_DISPLAY_${id}%%`;
+  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, function(match, content) {
+    var id = mathBlocks.length;
+    mathBlocks.push({ type: 'display', content: content });
+    return '%%MATH_DISPLAY_' + id + '%%';
   });
 
-  // Extract inline math \(...\)
-  processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, (match, content) => {
-    const id = mathBlocks.length;
-    mathBlocks.push({ type: 'inline', content });
-    return `%%MATH_INLINE_${id}%%`;
+  processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, function(match, content) {
+    var id = mathBlocks.length;
+    mathBlocks.push({ type: 'inline', content: content });
+    return '%%MATH_INLINE_' + id + '%%';
   });
 
-  // ── Step 2: Let marked parse the rest ──
   marked.setOptions({ gfm: true, breaks: true });
-  let html = marked.parse(processed);
+  var html = marked.parse(processed);
 
-  // ── Step 3: Restore math blocks as rendered KaTeX ──
-  mathBlocks.forEach((block, id) => {
+  mathBlocks.forEach(function(block, id) {
     try {
-      const rendered = katex.renderToString(block.content, {
+      var rendered = katex.renderToString(block.content, {
         displayMode: block.type === 'display',
         throwOnError: false,
         trust: true
       });
       if (block.type === 'display') {
-        html = html.replace(`%%MATH_DISPLAY_${id}%%`, `<div class="katex-display">${rendered}</div>`);
+        html = html.replace('%%MATH_DISPLAY_' + id + '%%', '<div class="math-display">' + rendered + '</div>');
       } else {
-        html = html.replace(`%%MATH_INLINE_${id}%%`, rendered);
+        html = html.replace('%%MATH_INLINE_' + id + '%%', rendered);
       }
     } catch (e) {
-      const errHtml = `<span class="katex-error">${block.content}</span>`;
-      html = html.replace(`%%MATH_${block.type.toUpperCase()}_${id}%%`, errHtml);
+      html = html.replace('%%MATH_' + block.type.toUpperCase() + '_' + id + '%%', '<span class="katex-error">' + block.content + '</span>');
     }
   });
 
-  // Clean any remaining placeholders
   html = html.replace(/%%MATH_(?:DISPLAY|INLINE)_\d+%%/g, '');
 
   preview.innerHTML = html;
 
-  // ── Step 4: Highlight code with Prism ──
   if (typeof Prism !== 'undefined') {
-    preview.querySelectorAll('pre code').forEach(block => {
+    preview.querySelectorAll('pre code').forEach(function(block) {
       Prism.highlightElement(block);
     });
   }
 
-  // ── Step 5: Render Mermaid ──
   renderMermaid();
 }
 
-// ─── Mermaid render ───
 async function renderMermaid() {
   if (typeof mermaid === 'undefined') return;
   mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
-  const blocks = preview.querySelectorAll('code.language-mermaid');
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i];
-    const pre = block.parentElement;
-    const container = document.createElement('div');
+  var blocks = preview.querySelectorAll('code.language-mermaid');
+  for (var i = 0; i < blocks.length; i++) {
+    var block = blocks[i];
+    var pre = block.parentElement;
+    var container = document.createElement('div');
     container.className = 'mermaid';
-    container.id = `mermaid-${i}`;
+    container.id = 'mermaid-' + i;
     pre.replaceWith(container);
     try {
-      const { svg } = await mermaid.render(`mermaid-svg-${i}`, block.textContent);
-      container.innerHTML = svg;
-    } catch {
+      var result = await mermaid.render('mermaid-svg-' + i, block.textContent);
+      container.innerHTML = result.svg;
+    } catch (e) {
       container.textContent = block.textContent;
     }
   }
 }
 
-// ─── Line count ───
 function updateLineCount() {
-  const lines = editor.value.split('\n').length;
-  lineCount.textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+  var lines = editor.value.split('\n').length;
+  lineCount.textContent = lines + ' line' + (lines !== 1 ? 's' : '');
 }
 
-// ─── Debounced input ───
 function onInput() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
+  debounceTimer = setTimeout(function() {
     updatePreview();
     updateLineCount();
   }, 80);
@@ -178,35 +152,33 @@ function onInput() {
 
 editor.addEventListener('input', onInput);
 
-// ─── Tab key support ───
-editor.addEventListener('keydown', (e) => {
+editor.addEventListener('keydown', function(e) {
   if (e.key === 'Tab') {
     e.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
+    var start = editor.selectionStart;
+    var end = editor.selectionEnd;
     editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
     editor.selectionStart = editor.selectionEnd = start + 2;
     onInput();
   }
 });
 
-// ─── Gutter drag resize ───
-let isDragging = false;
-gutter.addEventListener('mousedown', () => {
+var isDragging = false;
+gutter.addEventListener('mousedown', function() {
   isDragging = true;
   gutter.classList.add('dragging');
   document.body.style.cursor = 'col-resize';
   document.body.style.userSelect = 'none';
 });
-document.addEventListener('mousemove', (e) => {
+document.addEventListener('mousemove', function(e) {
   if (!isDragging) return;
-  const rect = document.querySelector('.container').getBoundingClientRect();
-  const pct = ((e.clientX - rect.left) / rect.width) * 100;
-  const clamped = Math.max(20, Math.min(80, pct));
-  document.querySelector('.editor-pane').style.flex = `0 0 ${clamped}%`;
-  document.querySelector('.preview-pane').style.flex = `0 0 ${100 - clamped}%`;
+  var rect = document.querySelector('.container').getBoundingClientRect();
+  var pct = ((e.clientX - rect.left) / rect.width) * 100;
+  var clamped = Math.max(20, Math.min(80, pct));
+  document.querySelector('.editor-pane').style.flex = '0 0 ' + clamped + '%';
+  document.querySelector('.preview-pane').style.flex = '0 0 ' + (100 - clamped) + '%';
 });
-document.addEventListener('mouseup', () => {
+document.addEventListener('mouseup', function() {
   if (isDragging) {
     isDragging = false;
     gutter.classList.remove('dragging');
@@ -215,39 +187,38 @@ document.addEventListener('mouseup', () => {
   }
 });
 
-// ─── Modal ───
-btnDownload.addEventListener('click', () => {
+btnDownload.addEventListener('click', function() {
   if (!editor.value.trim()) return;
   modalOverlay.classList.remove('hidden');
   pdfTitleInput.value = '';
   pdfTitleInput.focus();
 });
-modalCancel.addEventListener('click', () => modalOverlay.classList.add('hidden'));
-modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.add('hidden'); });
-pdfTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') modalConfirm.click(); });
+modalCancel.addEventListener('click', function() { modalOverlay.classList.add('hidden'); });
+modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) modalOverlay.classList.add('hidden'); });
+pdfTitleInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') modalConfirm.click(); });
 
-modalConfirm.addEventListener('click', async () => {
-  const title = pdfTitleInput.value.trim() || 'Document';
+modalConfirm.addEventListener('click', async function() {
+  var title = pdfTitleInput.value.trim() || 'Document';
   modalOverlay.classList.add('hidden');
   btnDownload.classList.add('loading');
   btnDownload.disabled = true;
 
   try {
-    const res = await fetch('/api/generate-pdf', {
+    var res = await fetch('/api/generate-pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ markdown: editor.value, title })
+      body: JSON.stringify({ markdown: editor.value, title: title })
     });
     if (!res.ok) {
-      const err = await res.json();
+      var err = await res.json();
       alert('Error: ' + (err.error || 'PDF generation failed'));
       return;
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `${title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document'}.pdf`;
+    a.download = (title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document') + '.pdf';
     a.click();
     URL.revokeObjectURL(url);
   } catch (err) {
@@ -258,251 +229,16 @@ modalConfirm.addEventListener('click', async () => {
   }
 });
 
-// ─── Sample document ───
-btnSample.addEventListener('click', () => {
-  editor.value = `# AI Research & Engineering Report
-
-> A technical document showcasing markdown-to-PDF conversion with math, code, diagrams, and structured data.
-
----
-
-## 1. Introduction
-
-This report demonstrates the capabilities of **md2pdf** — a tool that converts Markdown into beautifully formatted PDF documents. It supports **KaTeX math**, **syntax-highlighted code**, **Mermaid diagrams**, tables, blockquotes, and more.
-
-The goal is to produce publication-quality documents from plain text, enabling engineers and researchers to focus on content rather than formatting.
-
----
-
-## 2. Machine Learning Fundamentals
-
-### 2.1 The Loss Function
-
-Training a neural network minimizes a loss function $\\mathcal{L}(\\theta)$ over parameters $\\theta$. For binary classification with cross-entropy:
-
-$$
-\\mathcal{L} = -\\frac{1}{N} \\sum_{i=1}^{N} \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]
-$$
-
-Where $y_i$ is the true label and $\\hat{y}_i$ is the predicted probability.
-
-### 2.2 Gradient Descent Update
-
-Parameters are updated using the gradient:
-
-$$
-\\theta_{t+1} = \\theta_t - \\eta \\nabla_\\theta \\mathcal{L}(\\theta_t)
-$$
-
-Where $\\eta$ is the learning rate.
-
-### 2.3 Attention Mechanism
-
-The transformer attention score is computed as:
-
-$$
-\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V
-$$
-
-Where $Q$, $K$, $V$ are query, key, and value matrices, and $d_k$ is the key dimension.
-
----
-
-## 3. System Architecture
-
-\`\`\`mermaid
-graph TD
-    A[User Input] --> B[Markdown Parser]
-    B --> C{Contains Math?}
-    C -->|Yes| D[KaTeX Renderer]
-    C -->|No| E[HTML Generator]
-    D --> E
-    E --> F{Contains Code?}
-    F -->|Yes| G[Prism Syntax Highlighter]
-    F -->|No| H[PDF Renderer]
-    G --> H
-    H --> I[Final PDF]
-\`\`\`
-
----
-
-## 4. Implementation
-
-### 4.1 Python — Transformer Block
-
-\`\`\`python
-import torch
-import torch.nn as nn
-import math
-
-class TransformerBlock(nn.Module):
-    def __init__(self, embed_size, heads, dropout=0.1):
-        super().__init__()
-        self.attention = nn.MultiheadAttention(embed_size, heads)
-        self.norm1 = nn.LayerNorm(embed_size)
-        self.norm2 = nn.LayerNorm(embed_size)
-        self.feed_forward = nn.Sequential(
-            nn.Linear(embed_size, embed_size * 4),
-            nn.GELU(),
-            nn.Linear(embed_size * 4, embed_size),
-        )
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x, mask=None):
-        # Self-attention with residual connection
-        attn_out, _ = self.attention(x, x, x, attn_mask=mask)
-        x = self.norm1(x + self.dropout(attn_out))
-        # Feed-forward with residual connection
-        ff_out = self.feed_forward(x)
-        x = self.norm2(x + self.dropout(ff_out))
-        return x
-
-# Example usage
-model = TransformerBlock(embed_size=512, heads=8)
-x = torch.randn(10, 32, 512)  # (seq_len, batch, embed)
-output = model(x)
-print(f"Output shape: {output.shape}")
-\`\`\`
-
-### 4.2 JavaScript — API Handler
-
-\`\`\`javascript
-import express from 'express';
-import { rateLimit } from 'express-rate-limit';
-
-const app = express();
-app.use(express.json({ limit: '10mb' }));
-
-// Rate limiting for PDF generation
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Too many requests' }
-});
-
-app.post('/api/generate', limiter, async (req, res) => {
-  const { markdown, options } = req.body;
-
-  if (!markdown?.trim()) {
-    return res.status(400).json({ error: 'No markdown provided' });
-  }
-
-  try {
-    const pdf = await generatePDF(markdown, options);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.send(pdf);
-  } catch (err) {
-    console.error('PDF error:', err);
-    res.status(500).json({ error: 'Generation failed' });
-  }
-});
-
-app.listen(3000, () => console.log('Server running on :3000'));
-\`\`\`
-
----
-
-## 5. Data Pipeline
-
-\`\`\`mermaid
-sequenceDiagram
-    participant U as User
-    participant A as API
-    participant Q as Queue
-    participant W as Worker
-    participant S as Storage
-
-    U->>A: POST /api/generate
-    A->>Q: Enqueue job
-    A-->>U: 202 Accepted
-    Q->>W: Process markdown
-    W->>W: Render PDF
-    W->>S: Store file
-    W-->>U: Webhook notification
-    U->>S: Download PDF
-\`\`\`
-
----
-
-## 6. Performance Metrics
-
-| Metric | Value | Description |
-|--------|-------|-------------|
-| Parse Speed | 12ms | Average markdown parse time |
-| PDF Gen | 180ms | End-to-end PDF generation |
-| File Size | 45KB | Average output PDF size |
-| Uptime | 99.97% | Service availability |
-| Latency P95 | 320ms | 95th percentile response time |
-
----
-
-## 7. Neural Network Training Flow
-
-\`\`\`mermaid
-flowchart LR
-    A[Dataset] --> B[Preprocessing]
-    B --> C[Batch Loader]
-    C --> D[Forward Pass]
-    D --> E[Compute Loss]
-    E --> F[Backpropagation]
-    F --> G{Converged?}
-    G -->|No| D
-    G -->|Yes| H[Save Model]
-\`\`\`
-
----
-
-## 8. Mathematical Foundations
-
-The softmax function normalizes logits into probabilities:
-
-$$
-\\sigma(z_i) = \\frac{e^{z_i}}{\\sum_{j=1}^{K} e^{z_j}}
-$$
-
-Batch normalization stabilizes training:
-
-$$
-\\hat{x}_i = \\frac{x_i - \\mu_B}{\\sqrt{\\sigma_B^2 + \\epsilon}}
-$$
-
-$$
-y_i = \\gamma \\hat{x}_i + \\beta
-$$
-
-The learning rate schedule with warmup:
-
-$$
-\\eta_t = \\eta_{\\min} + \\frac{1}{2}(\\eta_{\\max} - \\eta_{\\min})\\left(1 + \\cos\\left(\\frac{t}{T}\\pi\\right)\\right)
-$$
-
----
-
-## 9. Conclusion
-
-md2pdf enables developers to create professional documents directly from Markdown. With support for:
-
-- **KaTeX** — Publication-quality math rendering
-- **Mermaid** — Architecture and flow diagrams
-- **PrismJS** — Syntax highlighting for 30+ languages
-- **GFM** — Tables, task lists, and strikethrough
-
-The tool is open source and available on GitHub.
-
----
-
-*Made by [Gyaanendra](https://github.com/Gyaanendra) — [github.com/Gyaanendra/md2pdf](https://github.com/Gyaanendra/md2pdf)*
-`;
+btnSample.addEventListener('click', function() {
+  editor.value = '# AI Research & Engineering Report\n\n> A technical document showcasing markdown-to-PDF conversion with math, code, diagrams, and images.\n\n---\n\n## 1. Introduction\n\nThis report demonstrates the capabilities of **md2pdf** — a tool that converts Markdown into beautifully formatted PDF documents. It supports **KaTeX math**, **syntax-highlighted code**, **Mermaid diagrams**, images, tables, and blockquotes.\n\n![Neural Network](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=350&fit=crop)\n\nThe goal is to produce publication-quality documents from plain text, enabling engineers and researchers to focus on content rather than formatting.\n\n---\n\n## 2. Machine Learning Fundamentals\n\n### 2.1 The Loss Function\n\nTraining a neural network minimizes a loss function $\\mathcal{L}(\\theta)$ over parameters $\\theta$. For binary classification with cross-entropy:\n\n$$\\mathcal{L} = -\\frac{1}{N} \\sum_{i=1}^{N} \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]$$\n\nWhere $y_i$ is the true label and $\\hat{y}_i$ is the predicted probability.\n\n### 2.2 Gradient Descent Update\n\n$$\\theta_{t+1} = \\theta_t - \\eta \\nabla_\\theta \\mathcal{L}(\\theta_t)$$\n\nWhere $\\eta$ is the learning rate.\n\n### 2.3 Attention Mechanism\n\nThe transformer attention score:\n\n$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V$$\n\n![Code on Screen](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=350&fit=crop)\n\n---\n\n## 3. System Architecture\n\n```mermaid\ngraph TD\n    A[User Input] --> B[Markdown Parser]\n    B --> C{Contains Math?}\n    C -->|Yes| D[KaTeX Renderer]\n    C -->|No| E[HTML Generator]\n    D --> E\n    E --> F{Contains Code?}\n    F -->|Yes| G[Prism Highlighter]\n    F -->|No| H[PDF Renderer]\n    G --> H\n    H --> I[Final PDF]\n```\n\n---\n\n## 4. Implementation\n\n### 4.1 Python — Transformer Block\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass TransformerBlock(nn.Module):\n    def __init__(self, embed_size, heads, dropout=0.1):\n        super().__init__()\n        self.attention = nn.MultiheadAttention(embed_size, heads)\n        self.norm1 = nn.LayerNorm(embed_size)\n        self.norm2 = nn.LayerNorm(embed_size)\n        self.feed_forward = nn.Sequential(\n            nn.Linear(embed_size, embed_size * 4),\n            nn.GELU(),\n            nn.Linear(embed_size * 4, embed_size),\n        )\n        self.dropout = nn.Dropout(dropout)\n\n    def forward(self, x, mask=None):\n        attn_out, _ = self.attention(x, x, x, attn_mask=mask)\n        x = self.norm1(x + self.dropout(attn_out))\n        ff_out = self.feed_forward(x)\n        x = self.norm2(x + self.dropout(ff_out))\n        return x\n```\n\n### 4.2 JavaScript — API Handler\n\n```javascript\nimport express from \'express\';\n\nconst app = express();\napp.use(express.json({ limit: \'10mb\' }));\n\napp.post(\'/api/generate\', async (req, res) => {\n  const { markdown } = req.body;\n  if (!markdown?.trim()) {\n    return res.status(400).json({ error: \'No markdown\' });\n  }\n  const pdf = await generatePDF(markdown);\n  res.setHeader(\'Content-Type\', \'application/pdf\');\n  res.send(pdf);\n});\n```\n\n---\n\n## 5. Data Pipeline\n\n```mermaid\nsequenceDiagram\n    participant U as User\n    participant A as API\n    participant W as Worker\n    participant S as Storage\n\n    U->>A: POST /api/generate\n    A-->>U: 202 Accepted\n    A->>W: Process markdown\n    W->>W: Render PDF\n    W->>S: Store file\n    W-->>U: Download ready\n```\n\n---\n\n## 6. Performance Metrics\n\n| Metric | Value | Description |\n|--------|-------|-------------|\n| Parse Speed | 12ms | Markdown parse time |\n| PDF Gen | 180ms | End-to-end generation |\n| File Size | 45KB | Average output size |\n| Uptime | 99.97% | Service availability |\n| Latency P95 | 320ms | 95th percentile |\n\n---\n\n## 7. Training Flow\n\n```mermaid\nflowchart LR\n    A[Dataset] --> B[Preprocessing]\n    B --> C[Forward Pass]\n    C --> D[Compute Loss]\n    D --> E[Backpropagation]\n    E --> F{Converged?}\n    F -->|No| C\n    F -->|Yes| G[Save Model]\n```\n\n---\n\n## 8. Mathematical Foundations\n\nSoftmax function:\n\n$$\\sigma(z_i) = \\frac{e^{z_i}}{\\sum_{j=1}^{K} e^{z_j}}$$\n\nBatch normalization:\n\n$$\\hat{x}_i = \\frac{x_i - \\mu_B}{\\sqrt{\\sigma_B^2 + \\epsilon}} \\cdot \\gamma + \\beta$$\n\nLearning rate schedule:\n\n$$\\eta_t = \\eta_{\\min} + \\frac{1}{2}(\\eta_{\\max} - \\eta_{\\min})\\left(1 + \\cos\\left(\\frac{t}{T}\\pi\\right)\\right)$$\n\n![Server Room](https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=350&fit=crop)\n\n---\n\n## 9. Conclusion\n\nmd2pdf enables developers to create professional documents from Markdown with:\n\n- **KaTeX** — Math rendering\n- **Mermaid** — Diagrams\n- **PrismJS** — Syntax highlighting\n- **Images** — Full support\n\n---\n\n*Made by [Gyaanendra](https://github.com/Gyaanendra) — [github.com/Gyaanendra/md2pdf](https://github.com/Gyaanendra/md2pdf)*\n';
   onInput();
 });
 
-// ─── Clear ───
-btnClear.addEventListener('click', () => {
+btnClear.addEventListener('click', function() {
   editor.value = '';
   onInput();
 });
 
-// ─── Init ───
 onInput();
 updateLineNumbers();
 updateCursorPos();
