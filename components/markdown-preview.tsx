@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import rehypeHighlight from "rehype-highlight";
 import MermaidRenderer from "./mermaid-renderer";
 import katex from "katex";
 
@@ -52,11 +53,11 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
     <div id="preview-content" className="markdown-body prose max-w-none prose-slate prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-img:rounded-xl prose-img:mx-auto prose-img:shadow-xs">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[[rehypeKatex, { trust: true, strict: false }]]}
+        rehypePlugins={[rehypeHighlight, [rehypeKatex, { trust: true, strict: false }]]}
         components={{
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-mermaid/.exec(className || "");
-            const isInline = inline || (!match && !className?.includes("language-"));
+            const isInline = inline || (!match && !className?.includes("language-") && !className?.includes("hljs"));
 
             if (match) {
               const chart = String(children).replace(/\n$/, "");
@@ -68,9 +69,9 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                 <code
                   className="px-1.5 py-0.5 rounded text-[13px] font-mono"
                   style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#e11d48",
-                    border: "1px solid #e2e8f0"
+                    backgroundColor: "#3c3836",
+                    color: "#fe8019",
+                    border: "1px solid #504945"
                   }}
                   {...props}
                 >
@@ -79,31 +80,39 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               );
             }
 
-            const lang = (className || "").replace("language-", "").toUpperCase() || "CODE";
+            const rawLang = (className || "").replace("language-", "").replace("hljs", "").trim();
+            const lang = rawLang ? rawLang.toUpperCase() : "CODE";
 
             return (
               <div
-                className="my-4 rounded-xl overflow-hidden page-break-inside-avoid shadow-xs"
+                className="my-4 rounded-xl overflow-hidden page-break-inside-avoid shadow-md"
                 style={{
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e2e8f0"
+                  backgroundColor: "#1d2021",
+                  border: "1px solid #3c3836"
                 }}
               >
+                {/* Gruvbox Dark Window Header */}
                 <div
-                  className="px-4 py-1.5 flex justify-between items-center text-[11px] font-mono font-semibold"
+                  className="px-4 py-2 flex justify-between items-center text-[11px] font-mono font-bold tracking-wider select-none"
                   style={{
-                    backgroundColor: "#f1f5f9",
-                    borderBottom: "1px solid #e2e8f0",
-                    color: "#64748b"
+                    backgroundColor: "#282828",
+                    borderBottom: "1px solid #3c3836",
+                    color: "#fabd2f"
                   }}
                 >
-                  <span>{lang}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fb4934" }} />
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fabd2f" }} />
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#b8bb26" }} />
+                    <span className="ml-2 font-bold text-[#ebdbb2]">{lang}</span>
+                  </div>
+                  <span className="text-[#83a598] font-mono text-[10px] font-medium">Gruvbox Dark</span>
                 </div>
                 <pre
-                  className="p-4 overflow-x-auto text-xs font-mono leading-relaxed"
+                  className="p-4 overflow-x-auto text-xs font-mono leading-relaxed m-0"
                   style={{
-                    backgroundColor: "#f8fafc",
-                    color: "#0f172a"
+                    backgroundColor: "#1d2021",
+                    color: "#ebdbb2"
                   }}
                 >
                   <code className={className} {...props}>
@@ -151,9 +160,9 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               <blockquote
                 className="my-4 pl-4 pr-3 py-2 rounded-r-lg italic text-sm"
                 style={{
-                  borderLeft: "4px solid #2563eb",
-                  backgroundColor: "#eff6ff",
-                  color: "#1e3a8a"
+                  borderLeft: "4px solid #0284c7",
+                  backgroundColor: "#f0f9ff",
+                  color: "#0369a1"
                 }}
               >
                 {children}
