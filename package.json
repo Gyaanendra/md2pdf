@@ -1,0 +1,16 @@
+{
+  "name": "md2pdf",
+  "version": "1.0.0",
+  "description": "Markdown to PDF converter with live preview, syntax highlighting, and KaTeX math",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": ["markdown", "pdf", "converter", "syntax-highlighting", "katex"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "md-to-pdf": "^5.2.5"
+  }
+}
