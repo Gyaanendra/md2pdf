@@ -98,7 +98,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               >
                 {/* Gruvbox Dark Window Header Bar */}
                 <div
-                  className="px-4 py-1.5 flex items-center justify-between text-[11px] font-bold tracking-wider select-none"
+                  className="code-window-header px-4 py-1.5 flex items-center justify-between text-[11px] font-bold tracking-wider select-none"
                   style={{
                     backgroundColor: "#282828",
                     borderBottom: "1px solid #3c3836",
@@ -106,10 +106,10 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                     fontFamily: "'Roboto Mono', monospace"
                   }}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fb4934" }} />
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fabd2f" }} />
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#b8bb26" }} />
+                  <div className="code-dots-group flex items-center gap-1.5">
+                    <span className="dot-red w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fb4934" }} />
+                    <span className="dot-yellow w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#fabd2f" }} />
+                    <span className="dot-green w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: "#b8bb26" }} />
                     <span className="ml-2 font-bold uppercase tracking-wider text-[#fabd2f]">{lang}</span>
                   </div>
                   <span className="text-[#83a598] text-[10px] font-medium">Gruvbox Dark</span>

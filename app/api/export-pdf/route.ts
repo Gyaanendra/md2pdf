@@ -99,6 +99,57 @@ export async function POST(req: NextRequest) {
     .katex {
       font-size: 1.05em;
     }
+
+    /* Flexbox & Helper Utilities for Code Block Window in Puppeteer */
+    .flex { display: flex !important; }
+    .items-center { align-items: center !important; }
+    .justify-between { justify-content: space-between !important; }
+    .gap-1\.5 { gap: 6px !important; }
+    .w-2\.5 { width: 10px !important; }
+    .h-2\.5 { height: 10px !important; }
+    .rounded-full { border-radius: 9999px !important; }
+    .inline-block { display: inline-block !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .tracking-wider { letter-spacing: 0.05em !important; }
+
+    .code-window-header {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 6px 16px !important;
+      background-color: #282828 !important;
+      border-bottom: 1px solid #3c3836 !important;
+      font-family: 'Roboto Mono', monospace !important;
+      font-size: 11px !important;
+      font-weight: bold !important;
+      color: #fabd2f !important;
+    }
+    .code-dots-group {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .dot-red {
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      background-color: #fb4934 !important;
+      display: inline-block !important;
+    }
+    .dot-yellow {
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      background-color: #fabd2f !important;
+      display: inline-block !important;
+    }
+    .dot-green {
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      background-color: #b8bb26 !important;
+      display: inline-block !important;
+    }
     
     /* Gruvbox Dark Code Block Styling */
     .markdown-body pre {
