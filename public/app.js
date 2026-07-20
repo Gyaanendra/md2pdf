@@ -7,20 +7,54 @@ var cursorPos = document.getElementById('cursor-pos');
 var btnDownload = document.getElementById('btn-download');
 var btnSample = document.getElementById('btn-sample');
 var btnClear = document.getElementById('btn-clear');
+var btnCopyHtml = document.getElementById('btn-copy-html');
+var btnPrint = document.getElementById('btn-print');
 var modalOverlay = document.getElementById('modal-overlay');
 var modalCancel = document.getElementById('modal-cancel');
 var modalConfirm = document.getElementById('modal-confirm');
+var modalCloseIcon = document.getElementById('modal-close-icon');
 var pdfTitleInput = document.getElementById('pdf-title');
 var pdfSizeSelect = document.getElementById('pdf-size');
 var pdfOrientationSelect = document.getElementById('pdf-orientation');
 var pdfMarginSelect = document.getElementById('pdf-margin');
 var pdfTocCheck = document.getElementById('pdf-toc');
 var gutter = document.getElementById('gutter');
-var previewScroll = document.getElementById('preview-scroll');
 var dropZone = document.getElementById('drop-zone');
+var toastContainer = document.getElementById('toast-container');
 
 var debounceTimer = null;
 var DEBOUNCE_MS = 120;
+
+// ─── Toast System ───
+function showToast(message, type, duration) {
+  if (!toastContainer) return;
+  type = type || 'info';
+  duration = duration || 3500;
+
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+
+  var iconSvg = '';
+  if (type === 'success') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+  } else if (type === 'error') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  } else if (type === 'warning') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  } else {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  }
+
+  toast.innerHTML = iconSvg + '<span>' + message + '</span>';
+  toastContainer.appendChild(toast);
+
+  setTimeout(function() {
+    toast.classList.add('toast-out');
+    setTimeout(function() {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 200);
+  }, duration);
+}
 
 // ─── Line numbers ───
 function updateLineNumbers() {
@@ -305,6 +339,7 @@ dropZone.addEventListener('drop', function(e) {
       editor.value = editor.value.substring(0, pos) + markdownImage + editor.value.substring(pos);
       editor.selectionStart = editor.selectionEnd = pos + markdownImage.length;
       onInput();
+      showToast('Image inserted into document', 'success');
     });
   }
 });
@@ -336,13 +371,39 @@ function compressImage(file, maxWidth, quality) {
   });
 }
 
-// ─── Modal ───
+// ─── Toolbar Action Listeners ───
+if (btnCopyHtml) {
+  btnCopyHtml.addEventListener('click', function() {
+    if (!preview.innerHTML.trim()) return;
+    navigator.clipboard.writeText(preview.innerHTML).then(function() {
+      showToast('HTML copied to clipboard!', 'success');
+    }).catch(function() {
+      showToast('Failed to copy HTML', 'error');
+    });
+  });
+}
+
+if (btnPrint) {
+  btnPrint.addEventListener('click', function() {
+    window.print();
+  });
+}
+
+// ─── Modal Listeners ───
 btnDownload.addEventListener('click', function() {
-  if (!editor.value.trim()) return;
+  if (!editor.value.trim()) {
+    showToast('Please type or paste markdown content first', 'warning');
+    return;
+  }
   modalOverlay.classList.remove('hidden');
   pdfTitleInput.value = '';
   pdfTitleInput.focus();
 });
+
+if (modalCloseIcon) {
+  modalCloseIcon.addEventListener('click', function() { modalOverlay.classList.add('hidden'); });
+}
+
 modalCancel.addEventListener('click', function() { modalOverlay.classList.add('hidden'); });
 modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) modalOverlay.classList.add('hidden'); });
 pdfTitleInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') modalConfirm.click(); });
@@ -404,7 +465,9 @@ async function generatePdfClientSide(opts) {
       pagebreak: { mode: ['css', 'legacy'] }
     };
     try {
+      showToast('Rendering high-precision PDF...', 'info', 2000);
       await html2pdf().set(html2pdfOptions).from(container).save();
+      showToast('PDF downloaded successfully!', 'success');
       return;
     } catch (e) {
       console.warn('html2pdf export error, falling back to window.print:', e);
@@ -467,6 +530,7 @@ modalConfirm.addEventListener('click', async function() {
         a.download = (title.replace(/[^a-zA-Z0-9_\s-]/g, '').replace(/\s+/g, '_') || 'document') + '.pdf';
         a.click();
         URL.revokeObjectURL(url);
+        showToast('PDF downloaded successfully!', 'success');
         btnDownload.classList.remove('loading');
         btnDownload.disabled = false;
         return;
@@ -490,7 +554,7 @@ modalConfirm.addEventListener('click', async function() {
         margin: margin
       });
     } catch (e) {
-      alert('PDF generation failed: ' + e.message);
+      showToast('PDF generation failed: ' + e.message, 'error');
     }
   }
 
@@ -502,11 +566,13 @@ modalConfirm.addEventListener('click', async function() {
 btnSample.addEventListener('click', function() {
   editor.value = '# AI Research & Engineering Report\n\n> A technical document showcasing markdown-to-PDF with math, code, diagrams, chemistry, and images.\n\n---\n\n## 1. Introduction\n\nThis report demonstrates **md2pdf** — a tool that converts Markdown into formatted PDFs. It supports **KaTeX math**, **chemistry equations**, **syntax-highlighted code**, **Mermaid diagrams**, **footnotes**[^1], images, tables, and more.\n\n![Neural Network](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=350&fit=crop)\n\n---\n\n## 2. Machine Learning\n\n### 2.1 Loss Function\n\n$$\\mathcal{L} = -\\frac{1}{N} \\sum_{i=1}^{N} \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]$$\n\n### 2.2 Gradient Update\n\n$$\\theta_{t+1} = \\theta_t - \\eta \\nabla_\\theta \\mathcal{L}(\\theta_t)$$\n\n### 2.3 Attention\n\n$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V$$\n\n---\n\n## 3. Chemistry\n\n### 3.1 Chemical Reactions\n\nCombustion of methane:\n\n$$\\ce{CH4 + 2O2 -> CO2 + 2H2O}$$\n\n### 3.2 Equilibrium\n\n$$\\ce{N2 + 3H2 <=> 2NH3}$$\n\n### 3.3 Organic Synthesis\n\n$$\\ce{CH3CH2OH ->[H2SO4][\\Delta] CH2=CH2 + H2O}$$\n\n### 3.4 Acid-Base\n\n$$\\ce{HCl + NaOH -> NaCl + H2O}$$\n\n---\n\n## 4. System Architecture\n\n```mermaid\ngraph TD\n    A[Input] --> B[Parser]\n    B --> C{Math?}\n    C -->|Yes| D[KaTeX]\n    C -->|No| E[HTML]\n    D --> E\n    E --> F[PDF]\n```\n\n---\n\n## 5. Code\n\n```python\ndef train(model, data, epochs=100):\n    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)\n    for epoch in range(epochs):\n        loss = compute_loss(model, data)\n        loss.backward()\n        optimizer.step()\n        optimizer.zero_grad()\n    return model\n```\n\n---\n\n## 6. Pipeline\n\n```mermaid\nsequenceDiagram\n    participant U as User\n    participant A as API\n    participant W as Worker\n    U->>A: POST\n    A-->>U: 202\n    A->>W: Process\n    W-->>U: Done\n```\n\n---\n\n## 7. Metrics\n\n| Metric | Value |\n|--------|-------|\n| Speed | 12ms |\n| Size | 45KB |\n| Uptime | 99.97% |\n\n---\n\n## 8. Training Flow\n\n```mermaid\nflowchart LR\n    A[Data] --> B[Process]\n    B --> C[Train]\n    C --> D{Done?}\n    D -->|No| C\n    D -->|Yes| E[Save]\n```\n\n---\n\n## 9. Foundations\n\nSoftmax: $\\sigma(z_i) = \\frac{e^{z_i}}{\\sum_j e^{z_j}}$\n\nBatch norm: $\\hat{x} = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}} \\cdot \\gamma + $\n\n![Server](https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=350&fit=crop)\n\n---\n\n## Footnotes\n\n[^1]: Footnotes are supported! Add them with [^label] syntax.\n\n---\n\n*Made by [Gyaanendra](https://github.com/Gyaanendra)*\n';
   onInput();
+  showToast('Sample report loaded', 'info');
 });
 
 btnClear.addEventListener('click', function() {
   editor.value = '';
   onInput();
+  showToast('Editor cleared', 'info');
 });
 
 // ─── Init ───
