@@ -4,13 +4,23 @@
   "description": "Markdown to PDF converter with live preview, syntax highlighting, and KaTeX math",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "npx nodemon server.js",
     "start": "node server.js"
   },
-  "keywords": ["markdown", "pdf", "converter", "syntax-highlighting", "katex"],
+  "keywords": [
+    "markdown",
+    "pdf",
+    "converter",
+    "syntax-highlighting",
+    "katex"
+  ],
   "license": "MIT",
   "dependencies": {
     "express": "^5.2.1",
-    "md-to-pdf": "^5.2.5"
+    "katex": "^0.18.1",
+    "md-mermaid-pdf": "^0.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

@@ -1,23 +1,56 @@
 const express = require('express');
 const path = require('path');
-const { mdToPdf } = require('md-to-pdf');
+const { mdToPdf } = require('md-mermaid-pdf');
+const katex = require('katex');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Preview endpoint
-app.post('/api/preview', (req, res) => {
-  try {
-    const { markdown } = req.body;
-    // Simple server-side preview not needed — client renders via marked + Prism + KaTeX
-    res.json({ html: '' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Pre-render KaTeX math to HTML
+function renderKaTeX(md) {
+  let result = md;
+
+  // Display math $$...$$
+  result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Block math \[...\]
+  result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Inline math $...$  (not $$)
+  result = result.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Inline math \(...\)
+  result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  return result;
+}
 
 // PDF generation
 app.post('/api/generate-pdf', async (req, res) => {
@@ -28,8 +61,11 @@ app.post('/api/generate-pdf', async (req, res) => {
       return res.status(400).json({ error: 'No markdown provided' });
     }
 
+    // Pre-render KaTeX math to HTML
+    const withMath = renderKaTeX(markdown);
+
     const pdf = await mdToPdf(
-      { content: markdown },
+      { content: withMath },
       {
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -50,8 +86,7 @@ app.post('/api/generate-pdf', async (req, res) => {
             </div>`
         },
         stylesheet: [
-          'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css',
-          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
+          'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css'
         ],
         css: `
           body {
@@ -67,7 +102,6 @@ app.post('/api/generate-pdf', async (req, res) => {
             margin: 0 auto;
             padding: 0;
           }
-          /* Remove white gaps before code blocks */
           pre { margin-top: 0 !important; }
           p + pre, pre + p { margin-top: 0 !important; }
           pre {
@@ -87,7 +121,6 @@ app.post('/api/generate-pdf', async (req, res) => {
             font-size: 10.5px;
             color: #24292f;
           }
-          /* Syntax token colors — high contrast on light bg */
           pre .token.comment, pre .token.prolog, pre .token.doctype, pre .token.cdata { color: #6a737d; }
           pre .token.punctuation { color: #24292f; }
           pre .token.property, pre .token.tag, pre .token.boolean, pre .token.number, pre .token.constant, pre .token.symbol, pre .token.deleted { color: #005cc5; }
@@ -118,20 +151,14 @@ app.post('/api/generate-pdf', async (req, res) => {
           h1, h2, h3, h4 { margin-top: 20px; margin-bottom: 12px; font-weight: 600; line-height: 1.25; }
           h1 { font-size: 2em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
           h2 { font-size: 1.5em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
-          .katex-display {
-            margin: 16px 0;
-            padding: 12px;
-            background: #fafbfc;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
-            overflow-x: auto;
-            text-align: center;
-          }
-          .katex { font-size: 1.15em; }
           hr { border: none; border-top: 2px solid #d0d7de; margin: 12px 0; }
-          /* Prevent orphaned last line on extra page */
           p:last-child { page-break-inside: avoid; }
-        `
+          .mermaid { text-align: center; margin: 16px 0; padding: 12px; background: #fafbfc; border: 1px solid #d0d7de; border-radius: 6px; }
+          .mermaid svg { max-width: 100%; height: auto; }
+          .katex-display { margin: 16px 0 !important; text-align: center; }
+          .katex-display > .katex { font-size: 1.15em; }
+        `,
+        mermaidCdnUrl: 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
       }
     );
 
@@ -139,10 +166,9 @@ app.post('/api/generate-pdf', async (req, res) => {
       return res.status(500).json({ error: 'PDF generation returned nothing' });
     }
 
-    // Convert Uint8Array to Buffer for Express
     const buf = Buffer.from(pdf.content);
-
     const safeName = (title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${safeName}.pdf"`);
     res.send(buf);
@@ -154,5 +180,5 @@ app.post('/api/generate-pdf', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n  Markdown → PDF at http://localhost:${PORT}\n`);
+  console.log(`\n  md2pdf dev server → http://localhost:${PORT}\n`);
 });

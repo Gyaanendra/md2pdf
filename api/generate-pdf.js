@@ -1,4 +1,48 @@
-const { mdToPdf } = require('md-to-pdf');
+const { mdToPdf } = require('md-mermaid-pdf');
+const katex = require('katex');
+
+// Pre-render KaTeX math to HTML so PDF renderer doesn't need client-side JS
+function renderKaTeX(md) {
+  let result = md;
+
+  // Display math $$...$$
+  result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Block math \[...\]
+  result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Inline math $...$  (not $$)
+  result = result.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  // Inline math \(...\)
+  result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_, tex) => {
+    try {
+      return katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+    } catch {
+      return `<span class="katex-error">${tex}</span>`;
+    }
+  });
+
+  return result;
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -12,27 +56,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No markdown provided' });
     }
 
-    // Pre-process: extract math blocks so KaTeX renders properly in PDF
-    let processed = markdown;
+    // Step 1: Pre-render KaTeX math to HTML
+    const withMath = renderKaTeX(markdown);
 
-    // Protect display math $$...$$
-    const displayMath = [];
-    processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (_, content) => {
-      const id = displayMath.length;
-      displayMath.push(content);
-      return `%%DISPLAYMATH${id}%%`;
-    });
-
-    // Protect inline math $...$
-    const inlineMath = [];
-    processed = processed.replace(/\$([^\$\n]+?)\$/g, (_, content) => {
-      const id = inlineMath.length;
-      inlineMath.push(content);
-      return `%%INLINEMATH${id}%%`;
-    });
-
+    // Step 2: Generate PDF with md-mermaid-pdf (handles Mermaid properly)
     const pdf = await mdToPdf(
-      { content: processed },
+      { content: withMath },
       {
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -53,13 +82,7 @@ module.exports = async (req, res) => {
             </div>`
         },
         stylesheet: [
-          'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css',
-          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
-        ],
-        scripts: [
-          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js',
-          'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js',
-          'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
+          'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css'
         ],
         css: `
           body {
@@ -128,13 +151,10 @@ module.exports = async (req, res) => {
           p:last-child { page-break-inside: avoid; }
           .mermaid { text-align: center; margin: 16px 0; padding: 12px; background: #fafbfc; border: 1px solid #d0d7de; border-radius: 6px; }
           .mermaid svg { max-width: 100%; height: auto; }
-
-          /* KaTeX display math */
           .katex-display { margin: 16px 0 !important; text-align: center; }
           .katex-display > .katex { font-size: 1.15em; }
         `,
-        // Wait for mermaid to finish rendering
-        waitUntil: 'networkidle0'
+        mermaidCdnUrl: 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
       }
     );
 
