@@ -1,14 +1,5 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/generate-pdf.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "rewrites": [
-    { "source": "/api/generate-pdf", "destination": "/api/generate-pdf.js" }
-  ],
+  "outputDirectory": ".",
   "headers": [
     {
       "source": "/api/(.*)",
