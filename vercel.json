@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "api/generate-pdf.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 60
+      }
     },
     {
       "src": "api/preview.js",
@@ -15,12 +18,6 @@
     { "src": "/(.*)", "dest": "/public/$1" }
   ],
   "outputDirectory": "public",
-  "functions": {
-    "api/generate-pdf.js": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
   "env": {
     "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
   }
