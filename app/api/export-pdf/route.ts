@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   <style>
     @page {
       size: ${options?.pageSize || "A4"} ${options?.orientation || "portrait"};
-      margin: ${options?.margin === "narrow" ? "6mm" : options?.margin === "wide" ? "20mm" : "10mm"};
+      margin: ${options?.margin === "narrow" ? "5mm" : options?.margin === "wide" ? "18mm" : "8mm"};
     }
     *, ::before, ::after {
       box-sizing: border-box;
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       background-color: #ffffff;
       color: #0f172a;
       font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 12.5px;
+      line-height: 1.48;
       -webkit-font-smoothing: antialiased;
     }
     .markdown-body {
@@ -52,52 +52,56 @@ export async function POST(req: NextRequest) {
       max-width: 100%;
       font-family: 'Inter', 'Roboto', sans-serif !important;
     }
+    h1, h2, h3, h4, h5, h6 {
+      break-after: avoid-page !important;
+      break-after: avoid !important;
+    }
     h1 {
-      font-size: 2em;
+      font-size: 1.85em;
       font-weight: 800;
       letter-spacing: -0.02em;
       color: #0f172a;
       text-align: center;
-      margin-top: 0.4em;
-      margin-bottom: 0.5em;
-      padding-bottom: 0.3em;
+      margin-top: 0.2em;
+      margin-bottom: 0.4em;
+      padding-bottom: 0.25em;
       border-bottom: 2px solid #e2e8f0;
     }
     h2 {
-      font-size: 1.3em;
+      font-size: 1.25em;
       font-weight: 700;
       letter-spacing: -0.015em;
       color: #1e293b;
-      margin-top: 1.1em;
-      margin-bottom: 0.3em;
-      padding-bottom: 0.2em;
+      margin-top: 0.85em;
+      margin-bottom: 0.25em;
+      padding-bottom: 0.15em;
       border-bottom: 1px solid #f1f5f9;
     }
     h3 {
       font-size: 1.05em;
       font-weight: 600;
       color: #334155;
-      margin-top: 0.9em;
-      margin-bottom: 0.25em;
+      margin-top: 0.65em;
+      margin-bottom: 0.2em;
     }
     p {
       margin-top: 0;
-      margin-bottom: 0.6em;
+      margin-bottom: 0.5em;
     }
     hr {
       height: 0;
-      margin: 1em 0;
+      margin: 0.8em 0;
       border: 0;
       border-top: 1px solid #e2e8f0;
     }
     .katex-display {
-      margin: 0.8em 0 !important;
+      margin: 0.5em 0 !important;
       overflow-x: auto;
       overflow-y: hidden;
       break-inside: avoid !important;
     }
     .katex {
-      font-size: 1.05em;
+      font-size: 1.02em;
     }
 
     /* Flexbox & Helper Utilities for Code Block Window in Puppeteer */
@@ -116,11 +120,11 @@ export async function POST(req: NextRequest) {
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
-      padding: 6px 16px !important;
+      padding: 5px 14px !important;
       background-color: #282828 !important;
       border-bottom: 1px solid #3c3836 !important;
       font-family: 'Roboto Mono', monospace !important;
-      font-size: 11px !important;
+      font-size: 10.5px !important;
       font-weight: bold !important;
       color: #fabd2f !important;
     }
@@ -130,22 +134,22 @@ export async function POST(req: NextRequest) {
       gap: 6px !important;
     }
     .dot-red {
-      width: 10px !important;
-      height: 10px !important;
+      width: 9px !important;
+      height: 9px !important;
       border-radius: 50% !important;
       background-color: #fb4934 !important;
       display: inline-block !important;
     }
     .dot-yellow {
-      width: 10px !important;
-      height: 10px !important;
+      width: 9px !important;
+      height: 9px !important;
       border-radius: 50% !important;
       background-color: #fabd2f !important;
       display: inline-block !important;
     }
     .dot-green {
-      width: 10px !important;
-      height: 10px !important;
+      width: 9px !important;
+      height: 9px !important;
       border-radius: 50% !important;
       background-color: #b8bb26 !important;
       display: inline-block !important;
@@ -157,7 +161,7 @@ export async function POST(req: NextRequest) {
       border: 1px solid #3c3836 !important;
       border-radius: 8px !important;
       padding: 0 !important;
-      margin: 1em 0 !important;
+      margin: 0.75em 0 !important;
       color: #ebdbb2 !important;
       overflow: hidden !important;
       break-inside: avoid !important;
@@ -166,11 +170,11 @@ export async function POST(req: NextRequest) {
     .markdown-body pre code {
       background-color: #1d2021 !important;
       color: #ebdbb2 !important;
-      padding: 12px 14px !important;
+      padding: 10px 12px !important;
       display: block !important;
       font-family: 'Roboto Mono', ui-monospace, monospace !important;
-      font-size: 11.5px !important;
-      line-height: 1.5 !important;
+      font-size: 11px !important;
+      line-height: 1.45 !important;
     }
     .markdown-body pre code span {
       color: #ebdbb2;
@@ -228,19 +232,19 @@ export async function POST(req: NextRequest) {
       color: #0369a1 !important;
       background-color: #f0f9ff !important;
       border-radius: 0 8px 8px 0 !important;
-      padding: 6px 14px !important;
-      margin: 0.9em 0 !important;
+      padding: 5px 12px !important;
+      margin: 0.75em 0 !important;
       font-style: italic;
     }
     table {
       border-collapse: collapse;
       width: 100%;
-      margin: 0.9em 0;
+      margin: 0.75em 0;
       break-inside: avoid;
     }
     table th, table td {
       border: 1px solid #e2e8f0;
-      padding: 6px 10px;
+      padding: 5px 8px;
     }
     table th {
       background-color: #f8fafc;
@@ -249,26 +253,27 @@ export async function POST(req: NextRequest) {
     }
     img {
       max-width: 100%;
-      max-height: 280px;
+      max-height: 240px;
       height: auto;
       border-radius: 8px;
-      margin: 0.8em auto;
+      margin: 0.6em auto;
       display: block;
       break-inside: avoid;
     }
     .mermaid-wrapper {
-      margin: 0.9em 0;
-      padding: 12px;
-      background-color: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      margin: 0.75em 0 !important;
+      padding: 8px !important;
+      background-color: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
       break-inside: avoid !important;
     }
     .mermaid-wrapper svg {
-      max-height: 260px !important;
+      max-height: 230px !important;
       width: auto !important;
       margin: 0 auto !important;
       display: block !important;
+      background-color: #ffffff !important;
     }
     tr {
       break-inside: avoid !important;
@@ -282,7 +287,7 @@ export async function POST(req: NextRequest) {
 
     await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
 
-    const marginValue = options?.margin === "narrow" ? "6mm" : options?.margin === "wide" ? "20mm" : "10mm";
+    const marginValue = options?.margin === "narrow" ? "5mm" : options?.margin === "wide" ? "18mm" : "8mm";
     const format = options?.pageSize || "A4";
 
     const pdfBuffer = await page.pdf({
