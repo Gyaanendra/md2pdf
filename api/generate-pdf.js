@@ -111,7 +111,7 @@ img{display:block;max-width:70%;height:auto;margin:12pt auto;border-radius:4px}
         printBackground: true,
         displayHeaderFooter: true,
         headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString() + '</span></div>',
-        footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0">md2pdf v1.00.01 | Page <span class="pageNumber"></span> of <span class="totalPages"></span> | by Gyaanendra</div>'
+        footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0">md2pdf v1.0.2 | Page <span class="pageNumber"></span> of <span class="totalPages"></span> | by Gyaanendra</div>'
       });
 
       await browser.close();

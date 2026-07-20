@@ -1,6 +1,6 @@
 {
   "name": "md2pdf",
-  "version": "1.00.01",
+  "version": "1.0.2",
   "description": "Markdown to PDF converter with live preview, syntax highlighting, and KaTeX math",
   "private": true,
   "scripts": {
@@ -19,7 +19,6 @@
     "@sparticuz/chromium": "^149.0.0",
     "express": "^5.2.1",
     "katex": "^0.18.1",
-    "md-mermaid-pdf": "^0.1.7",
     "puppeteer-core": "^25.3.0"
   },
   "devDependencies": {

@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const { mdToPdf } = require('md-mermaid-pdf');
 const katex = require('katex');
 
 // Load mhchem extension for chemistry equations
@@ -210,36 +209,52 @@ app.post('/api/generate-pdf', async (req, res) => {
     const { markdown, title, pageSize, orientation, margin } = req.body;
     if (!markdown?.trim()) return res.status(400).json({ error: 'No markdown provided' });
 
-    const withMath = renderKaTeX(markdown);
     const pdfMargins = MARGINS[margin] || MARGINS.normal;
 
-    const pdf = await mdToPdf(
-      { content: withMath },
-      {
-        launch_options: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
-        pdf_options: {
-          format: pageSize || 'A4',
-          landscape: orientation === 'landscape',
-          margin: pdfMargins,
-          printBackground: true,
-          displayHeaderFooter: true,
-          headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0;padding-bottom:4pt;"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</span></div>',
-          footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span>md2pdf v1.00.01</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span><span>by Gyaanendra</span></div>'
-        },
-        stylesheet: [],
-        css: CSS,
-        mermaidCdnUrl: 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js'
-      }
-    );
+    let puppeteer, chromium, browser;
+    try {
+      puppeteer = require('puppeteer-core');
+      chromium = require('@sparticuz/chromium');
 
-    if (!pdf?.content) return res.status(500).json({ error: 'PDF generation returned nothing' });
+      const execPath = await chromium.executablePath();
+      browser = await puppeteer.launch({
+        args: chromium.args || ['--no-sandbox', '--disable-setuid-sandbox'],
+        defaultViewport: chromium.defaultViewport || { width: 1280, height: 800 },
+        executablePath: execPath,
+        headless: chromium.headless ?? true,
+      });
+    } catch (launchErr) {
+      console.error('Puppeteer launch failed on local server:', launchErr);
+      return res.status(500).json({ error: 'Chromium launch failed: ' + launchErr.message });
+    }
 
-    const buf = Buffer.from(pdf.content);
-    const safeName = (title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+    try {
+      const page = await browser.newPage();
+      const withMath = renderKaTeX(markdown);
+      const html = '<!DOCTYPE html><html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>' + CSS + '</style></head><body><div class="markdown-body">' + withMath + '</div></body></html>';
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 25000 });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + safeName + '.pdf"');
-    res.send(buf);
+      const pdf = await page.pdf({
+        format: pageSize || 'A4',
+        landscape: orientation === 'landscape',
+        margin: pdfMargins,
+        printBackground: true,
+        displayHeaderFooter: true,
+        headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0;padding-bottom:4pt;"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</span></div>',
+        footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span>md2pdf v1.0.2</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span><span>by Gyaanendra</span></div>'
+      });
+
+      await browser.close();
+
+      const safeName = (title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="' + safeName + '.pdf"');
+      res.send(Buffer.from(pdf));
+    } catch (renderErr) {
+      if (browser) await browser.close().catch(() => {});
+      console.error('Render error:', renderErr);
+      res.status(500).json({ error: renderErr.message || 'PDF render failed' });
+    }
 
   } catch (err) {
     console.error('PDF error:', err.message || err);
