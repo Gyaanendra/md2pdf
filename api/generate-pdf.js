@@ -189,6 +189,12 @@ pre, table, blockquote, .mermaid, .math-display { page-break-inside: avoid; }
 `;
 
 module.exports = async (req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
@@ -209,7 +215,7 @@ module.exports = async (req, res) => {
           printBackground: true,
           displayHeaderFooter: true,
           headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0;padding-bottom:4pt;"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</span></div>',
-          footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>'
+          footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span>md2pdf v1.00.01</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span><span>by Gyaanendra</span></div>'
         },
         stylesheet: [],
         css: CSS,

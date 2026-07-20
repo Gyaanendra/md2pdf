@@ -1,6 +1,6 @@
 {
   "name": "md2pdf",
-  "version": "1.0.0",
+  "version": "1.00.01",
   "description": "Markdown to PDF converter with live preview, syntax highlighting, and KaTeX math",
   "private": true,
   "scripts": {

@@ -12,6 +12,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CORS headers
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  next();
+});
+
 function renderKaTeX(md) {
   let result = md;
 
@@ -215,7 +224,7 @@ app.post('/api/generate-pdf', async (req, res) => {
           printBackground: true,
           displayHeaderFooter: true,
           headerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-bottom:0.5px solid #e0e0e0;padding-bottom:4pt;"><span>' + (title || 'Document').replace(/</g, '&lt;') + '</span><span>' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</span></div>',
-          footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>'
+          footerTemplate: '<div style="width:100%;padding:0 18mm;font-size:8px;color:#999;font-family:Inter,sans-serif;display:flex;justify-content:space-between;border-top:0.5px solid #e0e0e0;padding-top:4pt;"><span>md2pdf v1.00.01</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span><span>by Gyaanendra</span></div>'
         },
         stylesheet: [],
         css: CSS,
@@ -236,6 +245,12 @@ app.post('/api/generate-pdf', async (req, res) => {
     console.error('PDF error:', err.message || err);
     res.status(500).json({ error: err.message || 'PDF generation failed' });
   }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
 app.listen(PORT, () => console.log('\n  md2pdf → http://localhost:' + PORT + '\n'));
